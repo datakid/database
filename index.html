@@ -3,17 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pharmacy dashboard</title>
-    <!-- Load Firebase scripts first -->
+    <title>Pharmacy Dashboard</title>
+    <!-- Firebase CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
             --primary: #3b82f6;
             --primary-dark: #2563eb;
@@ -25,6 +19,12 @@
             --text-secondary: #64748b;
             --success: #22c55e;
             --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -51,7 +51,6 @@
         .header h1 {
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--text);
         }
 
         .database-switch {
@@ -59,15 +58,7 @@
             border: 1px solid var(--border);
             padding: 0.5rem;
             border-radius: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--text);
-            cursor: pointer;
-            transition: all 0.2s;
             min-width: 200px;
-        }
-
-        .database-switch:hover {
-            border-color: var(--primary);
         }
 
         .filters {
@@ -75,6 +66,7 @@
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .filter-input {
@@ -87,10 +79,21 @@
             transition: all 0.2s;
         }
 
-        .filter-input:focus {
-            outline: none;
+        /* Enhanced active filter styling */
+        .filter-input.active {
+            background-color: #f1f5f9;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .filters::after {
+            content: attr(data-active-filters);
+            position: absolute;
+            top: -1.5rem;
+            right: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
         .stats-grid {
@@ -129,7 +132,6 @@
         .table-scroll {
             height: 600px;
             overflow-y: auto;
-            overflow-x: auto;
         }
 
         table {
@@ -159,10 +161,7 @@
 
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: rgba(255, 255, 255, 0.8);
             display: none;
             justify-content: center;
@@ -186,23 +185,6 @@
         .loading .loading-overlay {
             display: flex;
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-        }
-    </style>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
-    <style>
-        /* ... (Keep the existing styles) ... */
     </style>
 </head>
 <body>
@@ -212,7 +194,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>Real-time Pharmacy Analytics</h1>
+            <h1>Pharmacy Dashboard</h1>
             <select class="database-switch" id="databaseSelect">
                 <option value="workforce">Workforce Database</option>
                 <option value="student">Student Database</option>
@@ -264,7 +246,6 @@
     </div>
 
     <script>
-    window.addEventListener('load', function() {
         const firebaseConfigs = {
             workforce: {
                 apiKey: "AIzaSyCziPixswDPCbYf1zuxdR0A_Z4KgRSrc0I",
@@ -297,17 +278,6 @@
             loadingOverlay: document.querySelector('.loading-overlay')
         };
 
-        function initializeFirebase() {
-            try {
-                apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
-                apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
-                currentApp = apps.workforce;
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                alert('Error initializing database connection. Please refresh the page.');
-            }
-        }
-
         function showLoading() {
             elements.loadingOverlay.style.display = 'flex';
         }
@@ -325,12 +295,26 @@
                 unit: elements.unit.value
             };
 
+            Object.entries(filters).forEach(([key, value]) => {
+                // Update active state of filters
+                elements[key].classList.toggle('active', Boolean(value));
+            });
+
+            // Update active filters count
+            const activeCount = Object.values(filters).filter(Boolean).length + 
+                              (elements.search.value ? 1 : 0);
+            
+            document.querySelector('.filters').setAttribute(
+                'data-active-filters',
+                activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
+            );
+
             Object.keys(filters).forEach(filter => {
                 const options = [...new Set(currentData
                     .filter(item => 
-                        Object.keys(filters).every(key => 
-                            key === filter || filters[key] === '' || item[key] === filters[key]
-                        )
+                        Object.entries(filters)
+                            .filter(([k]) => k !== filter)
+                            .every(([k, v]) => !v || item[k] === v)
                     )
                     .map(item => item[filter]))
                 ].sort();
@@ -384,12 +368,13 @@
 
         function renderTable() {
             const fragment = document.createDocumentFragment();
+            
             if (filteredData.length === 0) {
                 const row = document.createElement('tr');
                 row.innerHTML = '<td colspan="7" class="empty-state">No matching records found</td>';
                 fragment.appendChild(row);
             } else {
-                filteredData.slice(0, 100).forEach(item => {
+                filteredData.forEach(item => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${item.name}</td>
@@ -403,8 +388,28 @@
                     fragment.appendChild(row);
                 });
             }
+
             elements.tableBody.innerHTML = '';
             elements.tableBody.appendChild(fragment);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function initializeFirebase() {
+            try {
+                apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
+                apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
+                currentApp = apps.workforce;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                alert('Error initializing database connection. Please refresh the page.');
+            }
         }
 
         async function loadInitialData() {
@@ -437,22 +442,24 @@
                 realtimeListener.off();
             }
             realtimeListener = currentApp.database().ref('pharmacyData');
-            realtimeListener.on('child_changed', (snapshot) => {
+            realtimeListener.on('child_changed', snapshot => {
                 const changedData = snapshot.val();
-                const index = currentData.findIndex(item => item.id === changedData.id);
+const index = currentData.findIndex(item => item.id === changedData.id);
                 if (index !== -1) {
                     currentData[index] = changedData;
                     applyFilters();
                 }
             });
-            realtimeListener.on('child_added', (snapshot) => {
+
+            realtimeListener.on('child_added', snapshot => {
                 const newData = snapshot.val();
                 if (!currentData.some(item => item.id === newData.id)) {
                     currentData.push(newData);
                     applyFilters();
                 }
             });
-            realtimeListener.on('child_removed', (snapshot) => {
+
+            realtimeListener.on('child_removed', snapshot => {
                 const removedData = snapshot.val();
                 currentData = currentData.filter(item => item.id !== removedData.id);
                 applyFilters();
@@ -467,31 +474,21 @@
             });
         }
 
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
         // Event Listeners
         elements.databaseSelect.addEventListener('change', switchDatabase);
-
-        const debouncedApplyFilters = debounce(applyFilters, 300);
+        elements.search.addEventListener('input', debounce(applyFilters, 300));
 
         ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
-            elements[filter].addEventListener('change', debouncedApplyFilters);
+            elements[filter].addEventListener('change', applyFilters);
         });
-
-        elements.search.addEventListener('input', debouncedApplyFilters);
 
         // Initialize the application
-        initializeFirebase();
-        loadInitialData().then(() => {
-            setupRealtimeUpdates();
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            loadInitialData().then(() => {
+                setupRealtimeUpdates();
+            });
         });
-    });
     </script>
 </body>
 </html>
