@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pharmacy dashboard</title>
+    <!-- Load Firebase scripts first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #64748b;
+            --background: #f1f5f9;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --success: #22c55e;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .database-switch {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        .database-switch:hover {
+            border-color: var(--primary);
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            background: var(--surface);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-scroll {
+            height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: var(--background);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: var(--background);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading .loading-overlay {
+            display: flex;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
+    <style>
+        /* ... (Keep the existing styles) ... */
+    </style>
+</head>
+<body>
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Real-time Pharmacy Analytics</h1>
+            <select class="database-switch" id="databaseSelect">
+                <option value="workforce">Workforce Database</option>
+                <option value="student">Student Database</option>
+            </select>
+        </div>
+
+        <div class="filters">
+            <input type="text" id="search" placeholder="Search medications..." class="filter-input">
+            <select id="pharmacy" class="filter-input"></select>
+            <select id="region" class="filter-input"></select>
+            <select id="month" class="filter-input"></select>
+            <select id="method" class="filter-input"></select>
+            <select id="unit" class="filter-input"></select>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUnits">-</div>
+                <div class="stat-label">Total Units Sold</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalMeds">-</div>
+                <div class="stat-label">Unique Medications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPharmacies">-</div>
+                <div class="stat-label">Active Pharmacies</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Medication</th>
+                            <th>Pharmacy</th>
+                            <th>Region</th>
+                            <th>Month</th>
+                            <th>Units Sold</th>
+                            <th>Unit Type</th>
+                            <th>Method</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    window.addEventListener('load', function() {
+        const firebaseConfigs = {
+            workforce: {
+                apiKey: "AIzaSyCziPixswDPCbYf1zuxdR0A_Z4KgRSrc0I",
+                databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com",
+            },
+            student: {
+                apiKey: "AIzaSyCSqnxDsN3xLLXiOv7mDZKMsH1rIvWUXDM",
+                databaseURL: "https://plan-c-464c2-default-rtdb.firebaseio.com",
+            }
+        };
+
+        let apps = {};
+        let currentApp;
+        let currentData = [];
+        let filteredData = [];
+        let realtimeListener = null;
+
+        const elements = {
+            databaseSelect: document.getElementById('databaseSelect'),
+            search: document.getElementById('search'),
+            pharmacy: document.getElementById('pharmacy'),
+            region: document.getElementById('region'),
+            month: document.getElementById('month'),
+            method: document.getElementById('method'),
+            unit: document.getElementById('unit'),
+            tableBody: document.getElementById('tableBody'),
+            totalUnits: document.getElementById('totalUnits'),
+            totalMeds: document.getElementById('totalMeds'),
+            totalPharmacies: document.getElementById('totalPharmacies'),
+            loadingOverlay: document.querySelector('.loading-overlay')
+        };
+
+        function initializeFirebase() {
+            try {
+                apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
+                apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
+                currentApp = apps.workforce;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                alert('Error initializing database connection. Please refresh the page.');
+            }
+        }
+
+        function showLoading() {
+            elements.loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            elements.loadingOverlay.style.display = 'none';
+        }
+
+        function updateFilters() {
+            const filters = {
+                pharmacy: elements.pharmacy.value,
+                region: elements.region.value,
+                month: elements.month.value,
+                method: elements.method.value,
+                unit: elements.unit.value
+            };
+
+            Object.keys(filters).forEach(filter => {
+                const options = [...new Set(currentData
+                    .filter(item => 
+                        Object.keys(filters).every(key => 
+                            key === filter || filters[key] === '' || item[key] === filters[key]
+                        )
+                    )
+                    .map(item => item[filter]))
+                ].sort();
+
+                const fragment = document.createDocumentFragment();
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
+                fragment.appendChild(defaultOption);
+
+                options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                    fragment.appendChild(optionElement);
+                });
+
+                elements[filter].innerHTML = '';
+                elements[filter].appendChild(fragment);
+                elements[filter].value = filters[filter];
+            });
+        }
+
+        function applyFilters() {
+            const searchTerm = elements.search.value.toLowerCase();
+            filteredData = currentData.filter(item =>
+                (elements.pharmacy.value === '' || item.pharmacy === elements.pharmacy.value) &&
+                (elements.region.value === '' || item.region === elements.region.value) &&
+                (elements.month.value === '' || item.month === elements.month.value) &&
+                (elements.method.value === '' || item.method === elements.method.value) &&
+                (elements.unit.value === '' || item.unit === elements.unit.value) &&
+                (searchTerm === '' || item.name.toLowerCase().includes(searchTerm))
+            );
+            updateStats();
+            renderTable();
+            updateFilters();
+        }
+
+        function updateStats() {
+            const stats = filteredData.reduce((acc, item) => {
+                acc.units += item.unitSold;
+                acc.meds.add(item.name);
+                acc.pharmacies.add(item.pharmacy);
+                return acc;
+            }, { units: 0, meds: new Set(), pharmacies: new Set() });
+
+            elements.totalUnits.textContent = stats.units.toLocaleString();
+            elements.totalMeds.textContent = stats.meds.size.toLocaleString();
+            elements.totalPharmacies.textContent = stats.pharmacies.size.toLocaleString();
+        }
+
+        function renderTable() {
+            const fragment = document.createDocumentFragment();
+            if (filteredData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="7" class="empty-state">No matching records found</td>';
+                fragment.appendChild(row);
+            } else {
+                filteredData.slice(0, 100).forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.pharmacy}</td>
+                        <td>${item.region}</td>
+                        <td>${item.month}</td>
+                        <td>${item.unitSold.toLocaleString()}</td>
+                        <td>${item.unit}</td>
+                        <td>${item.method}</td>
+                    `;
+                    fragment.appendChild(row);
+                });
+            }
+            elements.tableBody.innerHTML = '';
+            elements.tableBody.appendChild(fragment);
+        }
+
+        async function loadInitialData() {
+            showLoading();
+            try {
+                const snapshot = await currentApp.database().ref('pharmacyData').once('value');
+                const data = snapshot.val();
+                if (!data) {
+                    throw new Error('No data available');
+                }
+                currentData = Object.values(data).flat();
+                filteredData = currentData;
+                applyFilters();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                elements.tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            Error loading data: ${error.message}. Please try again.
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function setupRealtimeUpdates() {
+            if (realtimeListener) {
+                realtimeListener.off();
+            }
+            realtimeListener = currentApp.database().ref('pharmacyData');
+            realtimeListener.on('child_changed', (snapshot) => {
+                const changedData = snapshot.val();
+                const index = currentData.findIndex(item => item.id === changedData.id);
+                if (index !== -1) {
+                    currentData[index] = changedData;
+                    applyFilters();
+                }
+            });
+            realtimeListener.on('child_added', (snapshot) => {
+                const newData = snapshot.val();
+                if (!currentData.some(item => item.id === newData.id)) {
+                    currentData.push(newData);
+                    applyFilters();
+                }
+            });
+            realtimeListener.on('child_removed', (snapshot) => {
+                const removedData = snapshot.val();
+                currentData = currentData.filter(item => item.id !== removedData.id);
+                applyFilters();
+            });
+        }
+
+        function switchDatabase() {
+            const dbType = elements.databaseSelect.value;
+            currentApp = apps[dbType];
+            loadInitialData().then(() => {
+                setupRealtimeUpdates();
+            });
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Event Listeners
+        elements.databaseSelect.addEventListener('change', switchDatabase);
+
+        const debouncedApplyFilters = debounce(applyFilters, 300);
+
+        ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
+            elements[filter].addEventListener('change', debouncedApplyFilters);
+        });
+
+        elements.search.addEventListener('input', debouncedApplyFilters);
+
+        // Initialize the application
+        initializeFirebase();
+        loadInitialData().then(() => {
+            setupRealtimeUpdates();
+        });
+    });
+    </script>
+</body>
+</html>
