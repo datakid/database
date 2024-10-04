@@ -1,190 +1,265 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <title>Pharmacy Dashboard</title>
     <!-- Firebase CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
     <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary: #64748b;
-            --background: #f1f5f9;
-            --surface: #ffffff;
-            --border: #e2e8f0;
-            --text: #1e293b;
-            --text-secondary: #64748b;
-            --success: #22c55e;
-            --shadow: rgba(0, 0, 0, 0.1);
-        }
+:root {
+    --primary: #1976D2;
+    --primary-dark: #1565C0;
+    --secondary: #757575;
+    --background: #F5F5F5;
+    --surface: #FFFFFF;
+    --border: #E0E0E0;
+    --text: #212121;
+    --text-secondary: #757575;
+    --success: #4CAF50;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--background);
-            color: var(--text);
-            line-height: 1.5;
-        }
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.5;
+}
 
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+.container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            gap: 1rem;
-        }
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
 
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+.header h1 {
+    font-size: 1.75rem;
+    font-weight: 500;
+}
 
-        .database-switch {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            min-width: 200px;
-        }
+.database-switch,
+.filter-input,
+.reset-filters {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: var(--text);
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px var(--shadow);
+}
 
-        .filters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-            position: relative;
-        }
+.database-switch:focus,
+.filter-input:focus,
+.reset-filters:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 1px 6px var(--shadow);
+}
 
-        .filter-input {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--text);
-            transition: all 0.2s;
-        }
+.filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
 
-        /* Enhanced active filter styling */
-        .filter-input.active {
-            background-color: #f1f5f9;
-            border-color: var(--primary);
-            color: var(--primary);
-            font-weight: 500;
-        }
+.filter-input.active {
+    background-color: #E3F2FD;
+    color: var(--primary);
+    font-weight: 500;
+}
 
-        .filters::after {
-            content: attr(data-active-filters);
-            position: absolute;
-            top: -1.5rem;
-            right: 0;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
+.filters::after {
+    content: attr(data-active-filters);
+    position: absolute;
+    top: -1.5rem;
+    right: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
+.reset-filters {
+    grid-column: 1 / -1;
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    border: none;
+}
 
-        .stat-card {
-            background: var(--surface);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px var(--shadow);
-        }
+.reset-filters:hover {
+    background-color: var(--primary-dark);
+}
 
-        .stat-value {
-            font-size: 1.875rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
 
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
+.stat-card {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px var(--shadow);
+}
 
-        .table-container {
-            background: var(--surface);
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px var(--shadow);
-            overflow: hidden;
-        }
+.stat-value {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
 
-        .table-scroll {
-            height: 600px;
-            overflow-y: auto;
-        }
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-        }
+.table-container {
+    background: var(--surface);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px var(--shadow);
+    overflow: hidden;
+}
 
-        th {
-            background: var(--background);
-            font-weight: 600;
-            text-align: left;
-            padding: 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
+.table-scroll {
+    height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
-        td {
-            padding: 1rem;
-            border-top: 1px solid var(--border);
-        }
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+    table-layout: fixed;
+}
 
-        tr:hover td {
-            background: var(--background);
-        }
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+}
 
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    font-weight: 500;
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border);
+}
 
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
-        }
+/* Specific column widths */
+th:first-child { width: 35%; }  /* Medication */
+th:nth-child(2) { width: 15%; } /* Pharmacy */
+th:nth-child(3) { width: 10%; } /* Region */
+th:nth-child(4) { width: 10%; } /* Month */
+th:nth-child(5) { width: 10%; } /* Units Sold */
+th:nth-child(6) { width: 10%; } /* Unit Type */
+th:nth-child(7) { width: 10%; } /* Method */
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+tbody {
+    position: relative;
+}
 
-        .loading .loading-overlay {
-            display: flex;
-        }
+td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.virtual-row {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    background: var(--surface);
+    display: flex;
+}
+
+.virtual-row td {
+    flex: none;
+    width: var(--col-width);
+}
+
+.virtual-row td:first-child { width: 35%; }
+.virtual-row td:nth-child(2) { width: 15%; }
+.virtual-row td:nth-child(3) { width: 10%; }
+.virtual-row td:nth-child(4) { width: 10%; }
+.virtual-row td:nth-child(5) { width: 10%; }
+.virtual-row td:nth-child(6) { width: 10%; }
+.virtual-row td:nth-child(7) { width: 10%; }
+
+.virtual-row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.virtual-row:hover {
+    background-color: #f5f5f5;
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading .loading-overlay {
+    display: flex;
+}
+
+.result-count {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
     </style>
 </head>
 <body>
@@ -208,7 +283,10 @@
             <select id="month" class="filter-input"></select>
             <select id="method" class="filter-input"></select>
             <select id="unit" class="filter-input"></select>
+            <button id="resetFilters" class="reset-filters">Reset Filters</button>
         </div>
+
+        <div class="result-count" id="resultCount"></div>
 
         <div class="stats-grid">
             <div class="stat-card">
@@ -225,270 +303,378 @@
             </div>
         </div>
 
-        <div class="table-container">
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Medication</th>
-                            <th>Pharmacy</th>
-                            <th>Region</th>
-                            <th>Month</th>
-                            <th>Units Sold</th>
-                            <th>Unit Type</th>
-                            <th>Method</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
+    <div class="table-container">
+        <div class="table-scroll" id="tableScroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medication</th>
+                        <th>Pharmacy</th>
+                        <th>Region</th>
+                        <th>Month</th>
+                        <th>Units Sold</th>
+                        <th>Unit Type</th>
+                        <th>Method</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        const firebaseConfigs = {
-            workforce: {
-                apiKey: "AIzaSyCziPixswDPCbYf1zuxdR0A_Z4KgRSrc0I",
-                databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com",
-            },
-            student: {
-                apiKey: "AIzaSyCSqnxDsN3xLLXiOv7mDZKMsH1rIvWUXDM",
-                databaseURL: "https://plan-c-464c2-default-rtdb.firebaseio.com",
-            }
+// Firebase configuration and initialization
+const firebaseConfigs = {
+    workforce: {
+        apiKey: "AIzaSyCziPixswDPCbYf1zuxdR0A_Z4KgRSrc0I",
+        databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com",
+    },
+    student: {
+        apiKey: "AIzaSyCSqnxDsN3xLLXiOv7mDZKMsH1rIvWUXDM",
+        databaseURL: "https://plan-c-464c2-default-rtdb.firebaseio.com",
+    }
+};
+
+let apps = {};
+let currentApp;
+let dataCache = new Map();
+let indexedData = {};
+let filteredData = [];
+let virtualScroll;
+
+const elements = {
+    databaseSelect: document.getElementById('databaseSelect'),
+    search: document.getElementById('search'),
+    pharmacy: document.getElementById('pharmacy'),
+    region: document.getElementById('region'),
+    month: document.getElementById('month'),
+    method: document.getElementById('method'),
+    unit: document.getElementById('unit'),
+    tableBody: document.getElementById('tableBody'),
+    totalUnits: document.getElementById('totalUnits'),
+    totalMeds: document.getElementById('totalMeds'),
+    totalPharmacies: document.getElementById('totalPharmacies'),
+    loadingOverlay: document.querySelector('.loading-overlay'),
+    filtersContainer: document.querySelector('.filters'),
+    resetFilters: document.getElementById('resetFilters'),
+    resultCount: document.getElementById('resultCount'),
+    tableScroll: document.getElementById('tableScroll')
+};
+
+function showLoading() {
+    elements.loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    elements.loadingOverlay.style.display = 'none';
+}
+
+function createIndex(data, key) {
+    return data.reduce((index, item, i) => {
+        const value = item[key];
+        if (!index[value]) index[value] = new Set();
+        index[value].add(i);
+        return index;
+    }, {});
+}
+
+async function loadInitialData() {
+    showLoading();
+    try {
+        const snapshot = await currentApp.database().ref('pharmacyData').once('value');
+        const data = snapshot.val();
+        if (!data) {
+            throw new Error('No data available');
+        }
+        
+        const flatData = Object.values(data).flat();
+        dataCache.set(currentApp.name, flatData);
+        
+        // Create indexes
+        indexedData = {
+            pharmacy: createIndex(flatData, 'pharmacy'),
+            region: createIndex(flatData, 'region'),
+            month: createIndex(flatData, 'month'),
+            method: createIndex(flatData, 'method'),
+            unit: createIndex(flatData, 'unit')
         };
+        
+        updateFilters();
+        applyFilters();
+    } catch (error) {
+        console.error('Error loading data:', error);
+        elements.tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    Error loading data: ${error.message}. Please try again.
+                </td>
+            </tr>
+        `;
+    } finally {
+        hideLoading();
+    }
+}
 
-        let apps = {};
-        let currentApp;
-        let currentData = [];
-        let filteredData = [];
-        let realtimeListener = null;
+function updateFilters() {
+    const data = dataCache.get(currentApp.name);
+    
+    Object.keys(indexedData).forEach(filter => {
+        const options = Object.keys(indexedData[filter]).sort();
+        const fragment = document.createDocumentFragment();
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
+        fragment.appendChild(defaultOption);
 
-        const elements = {
-            databaseSelect: document.getElementById('databaseSelect'),
-            search: document.getElementById('search'),
-            pharmacy: document.getElementById('pharmacy'),
-            region: document.getElementById('region'),
-            month: document.getElementById('month'),
-            method: document.getElementById('method'),
-            unit: document.getElementById('unit'),
-            tableBody: document.getElementById('tableBody'),
-            totalUnits: document.getElementById('totalUnits'),
-            totalMeds: document.getElementById('totalMeds'),
-            totalPharmacies: document.getElementById('totalPharmacies'),
-            loadingOverlay: document.querySelector('.loading-overlay')
-        };
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.textContent = option;
+            fragment.appendChild(optionElement);
+        });
 
-        function showLoading() {
-            elements.loadingOverlay.style.display = 'flex';
+        elements[filter].innerHTML = '';
+        elements[filter].appendChild(fragment);
+    });
+}
+
+function applyFilters() {
+    const data = dataCache.get(currentApp.name);
+    const searchTerm = elements.search.value.toLowerCase();
+    
+    let filteredIndexes = new Set(Array.from({ length: data.length }, (_, i) => i));
+
+    // Apply search filter first
+    if (searchTerm) {
+        filteredIndexes = new Set([...filteredIndexes].filter(i => 
+            data[i].name.toLowerCase().includes(searchTerm)
+        ));
+    }
+
+    // Apply other filters
+    Object.keys(indexedData).forEach(filter => {
+        const value = elements[filter].value;
+        if (value) {
+            const filterSet = indexedData[filter][value] || new Set();
+            filteredIndexes = new Set([...filteredIndexes].filter(x => filterSet.has(x)));
         }
+    });
 
-        function hideLoading() {
-            elements.loadingOverlay.style.display = 'none';
+    filteredData = [...filteredIndexes].map(i => data[i]);
+    updateStats(filteredData);
+    updateVirtualScroll();
+    updateActiveFiltersDisplay();
+    updateResultCount(filteredData.length);
+    updateFilterOptions(filteredIndexes);
+}
+
+function updateFilterOptions(filteredIndexes) {
+    const data = dataCache.get(currentApp.name);
+
+    Object.keys(indexedData).forEach(filter => {
+        const currentValue = elements[filter].value;
+        const availableOptions = new Set();
+
+        filteredIndexes.forEach(index => {
+            availableOptions.add(data[index][filter]);
+        });
+
+        const options = Array.from(availableOptions).sort();
+        const fragment = document.createDocumentFragment();
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
+        fragment.appendChild(defaultOption);
+
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.textContent = option;
+            fragment.appendChild(optionElement);
+        });
+
+        elements[filter].innerHTML = '';
+        elements[filter].appendChild(fragment);
+        elements[filter].value = currentValue;
+    });
+}
+
+function updateStats(data) {
+    const stats = data.reduce((acc, item) => {
+        acc.units += item.unitSold;
+        acc.meds.add(item.name);
+        acc.pharmacies.add(item.pharmacy);
+        return acc;
+    }, { units: 0, meds: new Set(), pharmacies: new Set() });
+
+    elements.totalUnits.textContent = stats.units.toLocaleString();
+    elements.totalMeds.textContent = stats.meds.size.toLocaleString();
+    elements.totalPharmacies.textContent = stats.pharmacies.size.toLocaleString();
+}
+
+function updateActiveFiltersDisplay() {
+    const activeFilters = ['pharmacy', 'region', 'month', 'method', 'unit'].filter(filter => 
+        elements[filter].value !== ''
+    );
+    
+    if (elements.search.value) {
+        activeFilters.push('search');
+    }
+
+    const activeCount = activeFilters.length;
+    elements.filtersContainer.setAttribute(
+        'data-active-filters',
+        activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
+    );
+
+    Object.entries(elements).forEach(([key, element]) => {
+        if (['pharmacy', 'region', 'month', 'method', 'unit', 'search'].includes(key)) {
+            element.classList.toggle('active', activeFilters.includes(key));
         }
+    });
+}
 
-        function updateFilters() {
-            const filters = {
-                pharmacy: elements.pharmacy.value,
-                region: elements.region.value,
-                month: elements.month.value,
-                method: elements.method.value,
-                unit: elements.unit.value
-            };
+function updateResultCount(count) {
+    elements.resultCount.textContent = `Showing ${count.toLocaleString()} results`;
+}
 
-            Object.entries(filters).forEach(([key, value]) => {
-                // Update active state of filters
-                elements[key].classList.toggle('active', Boolean(value));
+const debounce = (func, wait) => {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+};
+
+function initializeFirebase() {
+    try {
+        apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
+        apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
+        currentApp = apps.workforce;
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        alert('Error initializing database connection. Please refresh the page.');
+    }
+}
+
+function switchDatabase() {
+    const dbType = elements.databaseSelect.value;
+    currentApp = apps[dbType];
+    if (dataCache.has(currentApp.name)) {
+        updateFilters();
+        applyFilters();
+    } else {
+        loadInitialData();
+    }
+}
+
+function resetFilters() {
+    elements.search.value = '';
+    ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
+        elements[filter].value = '';
+    });
+    applyFilters();
+}
+
+class VirtualScroll {
+    constructor(container, itemHeight) {
+        this.container = container;
+        this.itemHeight = itemHeight;
+        this.totalHeight = 0;
+        this.scrollTop = 0;
+        this.visibleItems = new Set();
+        this.renderBuffer = 5; // Number of extra items to render above and below the visible area
+
+        this.container.addEventListener('scroll', this.onScroll.bind(this));
+        this.render = this.render.bind(this);
+        this.scheduledAnimationFrame = null;
+    }
+
+    onScroll() {
+        this.scrollTop = this.container.scrollTop;
+        this.scheduleRender();
+    }
+
+    scheduleRender() {
+        if (!this.scheduledAnimationFrame) {
+            this.scheduledAnimationFrame = requestAnimationFrame(() => {
+                this.render();
+                this.scheduledAnimationFrame = null;
             });
-
-            // Update active filters count
-            const activeCount = Object.values(filters).filter(Boolean).length + 
-                              (elements.search.value ? 1 : 0);
-            
-            document.querySelector('.filters').setAttribute(
-                'data-active-filters',
-                activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
-            );
-
-            Object.keys(filters).forEach(filter => {
-                const options = [...new Set(currentData
-                    .filter(item => 
-                        Object.entries(filters)
-                            .filter(([k]) => k !== filter)
-                            .every(([k, v]) => !v || item[k] === v)
-                    )
-                    .map(item => item[filter]))
-                ].sort();
-
-                const fragment = document.createDocumentFragment();
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
-                fragment.appendChild(defaultOption);
-
-                options.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
-                    fragment.appendChild(optionElement);
-                });
-
-                elements[filter].innerHTML = '';
-                elements[filter].appendChild(fragment);
-                elements[filter].value = filters[filter];
-            });
         }
+    }
 
-        function applyFilters() {
-            const searchTerm = elements.search.value.toLowerCase();
-            filteredData = currentData.filter(item =>
-                (elements.pharmacy.value === '' || item.pharmacy === elements.pharmacy.value) &&
-                (elements.region.value === '' || item.region === elements.region.value) &&
-                (elements.month.value === '' || item.month === elements.month.value) &&
-                (elements.method.value === '' || item.method === elements.method.value) &&
-                (elements.unit.value === '' || item.unit === elements.unit.value) &&
-                (searchTerm === '' || item.name.toLowerCase().includes(searchTerm))
-            );
-            updateStats();
-            renderTable();
-            updateFilters();
-        }
+    render() {
+        const startIndex = Math.floor(this.scrollTop / this.itemHeight) - this.renderBuffer;
+        const endIndex = Math.min(
+            startIndex + Math.ceil(this.container.clientHeight / this.itemHeight) + this.renderBuffer * 2,
+            filteredData.length
+        );
+        
+        const fragment = document.createDocumentFragment();
+        const newVisibleItems = new Set();
 
-        function updateStats() {
-            const stats = filteredData.reduce((acc, item) => {
-                acc.units += item.unitSold;
-                acc.meds.add(item.name);
-                acc.pharmacies.add(item.pharmacy);
-                return acc;
-            }, { units: 0, meds: new Set(), pharmacies: new Set() });
-
-            elements.totalUnits.textContent = stats.units.toLocaleString();
-            elements.totalMeds.textContent = stats.meds.size.toLocaleString();
-            elements.totalPharmacies.textContent = stats.pharmacies.size.toLocaleString();
-        }
-
-        function renderTable() {
-            const fragment = document.createDocumentFragment();
-            
-            if (filteredData.length === 0) {
+        for (let i = Math.max(0, startIndex); i < endIndex; i++) {
+            newVisibleItems.add(i);
+            if (!this.visibleItems.has(i)) {
+                const item = filteredData[i];
                 const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="7" class="empty-state">No matching records found</td>';
-                fragment.appendChild(row);
-            } else {
-                filteredData.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.pharmacy}</td>
-                        <td>${item.region}</td>
-                        <td>${item.month}</td>
-                        <td>${item.unitSold.toLocaleString()}</td>
-                        <td>${item.unit}</td>
-                        <td>${item.method}</td>
-                    `;
-                    fragment.appendChild(row);
-                });
-            }
-
-            elements.tableBody.innerHTML = '';
-            elements.tableBody.appendChild(fragment);
-        }
-
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        function initializeFirebase() {
-            try {
-                apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
-                apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
-                currentApp = apps.workforce;
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                alert('Error initializing database connection. Please refresh the page.');
-            }
-        }
-
-        async function loadInitialData() {
-            showLoading();
-            try {
-                const snapshot = await currentApp.database().ref('pharmacyData').once('value');
-                const data = snapshot.val();
-                if (!data) {
-                    throw new Error('No data available');
-                }
-                currentData = Object.values(data).flat();
-                filteredData = currentData;
-                applyFilters();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                elements.tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="empty-state">
-                            Error loading data: ${error.message}. Please try again.
-                        </td>
-                    </tr>
+                row.className = 'virtual-row';
+                row.style.position = 'absolute';
+                row.style.top = `${i * this.itemHeight}px`;
+                row.style.height = `${this.itemHeight}px`;
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.pharmacy}</td>
+                    <td>${item.region}</td>
+                    <td>${item.month}</td>
+                    <td>${item.unitSold.toLocaleString()}</td>
+                    <td>${item.unit}</td>
+                    <td>${item.method}</td>
                 `;
-            } finally {
-                hideLoading();
+                fragment.appendChild(row);
             }
         }
 
-        function setupRealtimeUpdates() {
-            if (realtimeListener) {
-                realtimeListener.off();
+        this.visibleItems.forEach(i => {
+            if (!newVisibleItems.has(i)) {
+                const row = this.container.querySelector(`tr[style*="top: ${i * this.itemHeight}px"]`);
+                if (row) row.remove();
             }
-            realtimeListener = currentApp.database().ref('pharmacyData');
-            realtimeListener.on('child_changed', snapshot => {
-                const changedData = snapshot.val();
-const index = currentData.findIndex(item => item.id === changedData.id);
-                if (index !== -1) {
-                    currentData[index] = changedData;
-                    applyFilters();
-                }
-            });
-
-            realtimeListener.on('child_added', snapshot => {
-                const newData = snapshot.val();
-                if (!currentData.some(item => item.id === newData.id)) {
-                    currentData.push(newData);
-                    applyFilters();
-                }
-            });
-
-            realtimeListener.on('child_removed', snapshot => {
-                const removedData = snapshot.val();
-                currentData = currentData.filter(item => item.id !== removedData.id);
-                applyFilters();
-            });
-        }
-
-        function switchDatabase() {
-            const dbType = elements.databaseSelect.value;
-            currentApp = apps[dbType];
-            loadInitialData().then(() => {
-                setupRealtimeUpdates();
-            });
-        }
-
-        // Event Listeners
-        elements.databaseSelect.addEventListener('change', switchDatabase);
-        elements.search.addEventListener('input', debounce(applyFilters, 300));
-
-        ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
-            elements[filter].addEventListener('change', applyFilters);
         });
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeFirebase();
-            loadInitialData().then(() => {
-                setupRealtimeUpdates();
-            });
-        });
+        this.visibleItems = newVisibleItems;
+        this.container.querySelector('tbody').appendChild(fragment);
+    }
+
+    updateItems() {
+        this.totalHeight = this.itemHeight * filteredData.length;
+        this.container.querySelector('tbody').style.height = `${this.totalHeight}px`;
+        this.render();
+    }
+}
+
+function updateVirtualScroll() {
+    if (!virtualScroll) {
+        virtualScroll = new VirtualScroll(elements.tableScroll, 50); // 50px is the estimated height of each row
+    }
+    virtualScroll.updateItems();
+}
+
+// Event Listeners
+elements.databaseSelect.addEventListener('change', switchDatabase);
+elements.search.addEventListener('input', debounce(applyFilters, 150));
+elements.resetFilters.addEventListener('click', resetFilters);
+
+['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
+    elements[filter].addEventListener('change', applyFilters);
+});
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    initializeFirebase();
+    loadInitialData();
+});
     </script>
 </body>
 </html>
