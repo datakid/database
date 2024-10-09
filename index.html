@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -346,9 +347,17 @@ const firebaseConfigs = {
 let apps = {};
 let currentApp;
 let dataCache = new Map();
-let indexedData = {};
 let filteredData = [];
-let virtualScroll;
+
+// Store all unique values for each filter
+let filterOptions = {
+    pharmacy: new Set(),
+    region: new Set(),
+    month: new Set(),
+    method: new Set(),
+    unit: new Set(),
+    name: new Set()
+};
 
 const elements = {
     databaseSelect: document.getElementById('databaseSelect'),
@@ -365,8 +374,7 @@ const elements = {
     loadingOverlay: document.querySelector('.loading-overlay'),
     filtersContainer: document.querySelector('.filters'),
     resetFilters: document.getElementById('resetFilters'),
-    resultCount: document.getElementById('resultCount'),
-    tableScroll: document.getElementById('tableScroll')
+    resultCount: document.getElementById('resultCount')
 };
 
 function showLoading() {
@@ -375,15 +383,6 @@ function showLoading() {
 
 function hideLoading() {
     elements.loadingOverlay.style.display = 'none';
-}
-
-function createIndex(data, key) {
-    return data.reduce((index, item, i) => {
-        const value = item[key];
-        if (!index[value]) index[value] = new Set();
-        index[value].add(i);
-        return index;
-    }, {});
 }
 
 async function loadInitialData() {
@@ -398,15 +397,10 @@ async function loadInitialData() {
         const flatData = Object.values(data).flat();
         dataCache.set(currentApp.name, flatData);
         
-        // Create indexes
-        indexedData = {
-            pharmacy: createIndex(flatData, 'pharmacy'),
-            region: createIndex(flatData, 'region'),
-            month: createIndex(flatData, 'month'),
-            method: createIndex(flatData, 'method'),
-            unit: createIndex(flatData, 'unit')
-        };
+        // Initialize filter options
+        initializeFilterOptions(flatData);
         
+        // Initialize filters and display
         updateFilters();
         applyFilters();
     } catch (error) {
@@ -423,87 +417,152 @@ async function loadInitialData() {
     }
 }
 
+function initializeFilterOptions(data) {
+    // Reset filter options
+    filterOptions = {
+        pharmacy: new Set(),
+        region: new Set(),
+        month: new Set(),
+        method: new Set(),
+        unit: new Set(),
+        name: new Set()
+    };
+
+    // Populate filter options from data
+    data.forEach(item => {
+        filterOptions.pharmacy.add(item.pharmacy);
+        filterOptions.region.add(item.region);
+        filterOptions.month.add(item.month);
+        filterOptions.method.add(item.method);
+        filterOptions.unit.add(item.unit);
+        filterOptions.name.add(item.name);
+    });
+}
+
 function updateFilters() {
-    const data = dataCache.get(currentApp.name);
+    const filterKeys = ['pharmacy', 'region', 'month', 'method', 'unit'];
     
-    Object.keys(indexedData).forEach(filter => {
-        const options = Object.keys(indexedData[filter]).sort();
+    filterKeys.forEach(key => {
+        const select = elements[key];
+        const currentValue = select.value;
+        
+        // Create sorted array of options
+        const options = Array.from(filterOptions[key]).sort();
+        
+        // Create document fragment for better performance
         const fragment = document.createDocumentFragment();
+        
+        // Add default "All" option
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
-        defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
+        defaultOption.textContent = `All ${key.charAt(0).toUpperCase() + key.slice(1)}s`;
         fragment.appendChild(defaultOption);
-
+        
+        // Add all other options
         options.forEach(option => {
             const optionElement = document.createElement('option');
             optionElement.value = option;
             optionElement.textContent = option;
             fragment.appendChild(optionElement);
         });
-
-        elements[filter].innerHTML = '';
-        elements[filter].appendChild(fragment);
+        
+        // Replace existing options
+        select.innerHTML = '';
+        select.appendChild(fragment);
+        
+        // Restore selected value if it exists
+        if (currentValue && options.includes(currentValue)) {
+            select.value = currentValue;
+        }
     });
 }
 
 function applyFilters() {
     const data = dataCache.get(currentApp.name);
+    if (!data) return;
+    
     const searchTerm = elements.search.value.toLowerCase();
     
-    let filteredIndexes = new Set(Array.from({ length: data.length }, (_, i) => i));
-
-    // Apply search filter first
-    if (searchTerm) {
-        filteredIndexes = new Set([...filteredIndexes].filter(i => 
-            data[i].name.toLowerCase().includes(searchTerm)
-        ));
-    }
-
-    // Apply other filters
-    Object.keys(indexedData).forEach(filter => {
-        const value = elements[filter].value;
-        if (value) {
-            const filterSet = indexedData[filter][value] || new Set();
-            filteredIndexes = new Set([...filteredIndexes].filter(x => filterSet.has(x)));
+    // Apply all filters in a single pass
+    filteredData = data.filter(item => {
+        // Check search term
+        if (searchTerm && !item.name.toLowerCase().includes(searchTerm)) {
+            return false;
         }
+        
+        // Check each filter
+        const filters = ['pharmacy', 'region', 'month', 'method', 'unit'];
+        return filters.every(filter => {
+            const selectedValue = elements[filter].value;
+            return !selectedValue || item[filter] === selectedValue;
+        });
     });
 
-    filteredData = [...filteredIndexes].map(i => data[i]);
+    // Update the UI
     updateStats(filteredData);
-    updateVirtualScroll();
+    renderTable(filteredData);
     updateActiveFiltersDisplay();
     updateResultCount(filteredData.length);
-    updateFilterOptions(filteredIndexes);
+    updateAvailableOptions();
 }
 
-function updateFilterOptions(filteredIndexes) {
-    const data = dataCache.get(currentApp.name);
+function updateAvailableOptions() {
+    // Get currently applied filters
+    const currentFilters = {
+        pharmacy: elements.pharmacy.value,
+        region: elements.region.value,
+        month: elements.month.value,
+        method: elements.method.value,
+        unit: elements.unit.value
+    };
 
-    Object.keys(indexedData).forEach(filter => {
-        const currentValue = elements[filter].value;
-        const availableOptions = new Set();
+    // Create sets of available options based on filtered data
+    const availableOptions = {
+        pharmacy: new Set(),
+        region: new Set(),
+        month: new Set(),
+        method: new Set(),
+        unit: new Set()
+    };
 
-        filteredIndexes.forEach(index => {
-            availableOptions.add(data[index][filter]);
+    // Populate available options from filtered data
+    filteredData.forEach(item => {
+        Object.keys(availableOptions).forEach(key => {
+            availableOptions[key].add(item[key]);
         });
+    });
 
-        const options = Array.from(availableOptions).sort();
+    // Update each filter's options while preserving current selections
+    Object.keys(currentFilters).forEach(filter => {
+        const select = elements[filter];
+        const currentValue = select.value;
+        
+        // Get available options for this filter
+        const options = Array.from(availableOptions[filter]).sort();
+        
+        // Create fragment with new options
         const fragment = document.createDocumentFragment();
+        
+        // Add "All" option
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
         defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
         fragment.appendChild(defaultOption);
-
+        
+        // Add available options
         options.forEach(option => {
             const optionElement = document.createElement('option');
             optionElement.value = option;
             optionElement.textContent = option;
             fragment.appendChild(optionElement);
         });
-
-        elements[filter].innerHTML = '';
-        elements[filter].appendChild(fragment);
-        elements[filter].value = currentValue;
+        
+        // Replace options and restore selection
+        select.innerHTML = '';
+        select.appendChild(fragment);
+        if (currentValue && options.includes(currentValue)) {
+            select.value = currentValue;
+        }
     });
 }
 
@@ -535,6 +594,7 @@ function updateActiveFiltersDisplay() {
         activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
     );
 
+    // Update visual state of filters
     Object.entries(elements).forEach(([key, element]) => {
         if (['pharmacy', 'region', 'month', 'method', 'unit', 'search'].includes(key)) {
             element.classList.toggle('active', activeFilters.includes(key));
@@ -544,6 +604,25 @@ function updateActiveFiltersDisplay() {
 
 function updateResultCount(count) {
     elements.resultCount.textContent = `Showing ${count.toLocaleString()} results`;
+}
+
+function renderTable(data) {
+    const fragment = document.createDocumentFragment();
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.pharmacy}</td>
+            <td>${item.region}</td>
+            <td>${item.month}</td>
+            <td>${item.unitSold.toLocaleString()}</td>
+            <td>${item.unit}</td>
+            <td>${item.method}</td>
+        `;
+        fragment.appendChild(row);
+    });
+    elements.tableBody.innerHTML = '';
+    elements.tableBody.appendChild(fragment);
 }
 
 const debounce = (func, wait) => {
@@ -582,91 +661,6 @@ function resetFilters() {
         elements[filter].value = '';
     });
     applyFilters();
-}
-
-class VirtualScroll {
-    constructor(container, itemHeight) {
-        this.container = container;
-        this.itemHeight = itemHeight;
-        this.totalHeight = 0;
-        this.scrollTop = 0;
-        this.visibleItems = new Set();
-        this.renderBuffer = 5; // Number of extra items to render above and below the visible area
-
-        this.container.addEventListener('scroll', this.onScroll.bind(this));
-        this.render = this.render.bind(this);
-        this.scheduledAnimationFrame = null;
-    }
-
-    onScroll() {
-        this.scrollTop = this.container.scrollTop;
-        this.scheduleRender();
-    }
-
-    scheduleRender() {
-        if (!this.scheduledAnimationFrame) {
-            this.scheduledAnimationFrame = requestAnimationFrame(() => {
-                this.render();
-                this.scheduledAnimationFrame = null;
-            });
-        }
-    }
-
-    render() {
-        const startIndex = Math.floor(this.scrollTop / this.itemHeight) - this.renderBuffer;
-        const endIndex = Math.min(
-            startIndex + Math.ceil(this.container.clientHeight / this.itemHeight) + this.renderBuffer * 2,
-            filteredData.length
-        );
-        
-        const fragment = document.createDocumentFragment();
-        const newVisibleItems = new Set();
-
-        for (let i = Math.max(0, startIndex); i < endIndex; i++) {
-            newVisibleItems.add(i);
-            if (!this.visibleItems.has(i)) {
-                const item = filteredData[i];
-                const row = document.createElement('tr');
-                row.className = 'virtual-row';
-                row.style.position = 'absolute';
-                row.style.top = `${i * this.itemHeight}px`;
-                row.style.height = `${this.itemHeight}px`;
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${item.pharmacy}</td>
-                    <td>${item.region}</td>
-                    <td>${item.month}</td>
-                    <td>${item.unitSold.toLocaleString()}</td>
-                    <td>${item.unit}</td>
-                    <td>${item.method}</td>
-                `;
-                fragment.appendChild(row);
-            }
-        }
-
-        this.visibleItems.forEach(i => {
-            if (!newVisibleItems.has(i)) {
-                const row = this.container.querySelector(`tr[style*="top: ${i * this.itemHeight}px"]`);
-                if (row) row.remove();
-            }
-        });
-
-        this.visibleItems = newVisibleItems;
-        this.container.querySelector('tbody').appendChild(fragment);
-    }
-
-    updateItems() {
-        this.totalHeight = this.itemHeight * filteredData.length;
-        this.container.querySelector('tbody').style.height = `${this.totalHeight}px`;
-        this.render();
-    }
-}
-
-function updateVirtualScroll() {
-    if (!virtualScroll) {
-        virtualScroll = new VirtualScroll(elements.tableScroll, 50); // 50px is the estimated height of each row
-    }
-    virtualScroll.updateItems();
 }
 
 // Event Listeners
