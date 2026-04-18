@@ -9,8 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500&display=swap" rel="stylesheet">
 <script>
+try {
 const savedTheme = localStorage.getItem('lx-theme') || 'system';
 document.documentElement.setAttribute('data-theme', savedTheme);
+} catch (e) {
+document.documentElement.setAttribute('data-theme', 'system');
+}
 </script>
 <style>
 :root {
@@ -78,11 +82,15 @@ expand_less
         box-sizing: border-box;
     }
 
+    html, body {
+        min-height: 100vh;
+        background-color: var(--bg);
+        color: var(--text);
+    }
+
     body {
         font-family: var(--font-sans);
         font-size: 16px;
-        background-color: var(--bg);
-        color: var(--text);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -672,7 +680,7 @@ expand_less
     };
 
     const state = {
-        allData: [],
+        allData:[],
         filtered:[],
         db: 'all',
         sort: { key: null, dir: 1 },
@@ -709,13 +717,19 @@ expand_less
     let animationFrameId = null;
 
     function initThemeSwitcher() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'system';
+        let currentTheme = 'system';
+        try {
+            currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('lx-theme') || 'system';
+        } catch (e) {}
+
         DOM.themeBtns.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.value === currentTheme);
             btn.addEventListener('click', () => {
                 const theme = btn.dataset.value;
                 document.documentElement.setAttribute('data-theme', theme);
-                localStorage.setItem('lx-theme', theme);
+                try {
+                    localStorage.setItem('lx-theme', theme);
+                } catch (e) {}
                 DOM.themeBtns.forEach(b => b.classList.toggle('active', b.dataset.value === theme));
             });
         });
@@ -992,7 +1006,7 @@ expand_less
             csv += props.map(k => `"${row[k]}"`).join(',') + '\n';
         });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
