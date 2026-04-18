@@ -1,682 +1,701 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <title>Pharmacy Dashboard</title>
-    <!-- Firebase CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-database-compat.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
     <style>
-:root {
-    --primary: #1976D2;
-    --primary-dark: #1565C0;
-    --secondary: #757575;
-    --background: #F5F5F5;
-    --surface: #FFFFFF;
-    --border: #E0E0E0;
-    --text: #212121;
-    --text-secondary: #757575;
-    --success: #4CAF50;
-    --shadow: rgba(0, 0, 0, 0.1);
-}
+        :root {
+            --bg-color: #F7F6F3;
+            --surface: #FFFFFF;
+            --surface-hover: #F2F5F3;
+            --border: #E6E4DD;
+            --border-focus: #3A6B58;
+            --text-main: #2D312E;
+            --text-muted: #82877F;
+            --accent: #3A6B58;
+            --accent-light: #E8EFEA;
+            --shadow-sm: 0 2px 8px rgba(45, 49, 46, 0.04);
+            --shadow-md: 0 8px 24px rgba(45, 49, 46, 0.06);
+            --radius: 12px;
+            --font-sans: 'Be Vietnam Pro', sans-serif;
+            --font-serif: 'Fraunces', serif;
+            --row-height: 56px;
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'Roboto', Arial, sans-serif;
-    background: var(--background);
-    color: var(--text);
-    line-height: 1.5;
-}
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-.container {
-    max-width: 1400px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    gap: 1rem;
-}
+        ::selection {
+            background-color: var(--accent-light);
+            color: var(--accent);
+        }
 
-.header h1 {
-    font-size: 1.75rem;
-    font-weight: 500;
-}
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
 
-.database-switch,
-.filter-input,
-.reset-filters {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    color: var(--text);
-    transition: all 0.2s;
-    box-shadow: 0 1px 3px var(--shadow);
-}
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
-.database-switch:focus,
-.filter-input:focus,
-.reset-filters:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 1px 6px var(--shadow);
-}
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
 
-.filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-    position: relative;
-}
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
 
-.filter-input.active {
-    background-color: #E3F2FD;
-    color: var(--primary);
-    font-weight: 500;
-}
+        .layout {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            min-height: 100vh;
+        }
 
-.filters::after {
-    content: attr(data-active-filters);
-    position: absolute;
-    top: -1.5rem;
-    right: 0;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-.reset-filters {
-    grid-column: 1 / -1;
-    background-color: var(--primary);
-    color: white;
-    cursor: pointer;
-    border: none;
-}
+        .title-group h1 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
 
-.reset-filters:hover {
-    background-color: var(--primary-dark);
-}
+        .title-group p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
 
-.stat-card {
-    background: var(--surface);
-    padding: 1.5rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px var(--shadow);
-}
+        .select-wrapper {
+            position: relative;
+        }
 
-.stat-value {
-    font-size: 2rem;
-    font-weight: 500;
-    color: var(--primary);
-    margin-bottom: 0.5rem;
-}
+        .select-wrapper::after {
+            content: "";
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border-right: 1.5px solid var(--text-main);
+            border-bottom: 1.5px solid var(--text-main);
+            pointer-events: none;
+            transform-origin: center;
+            transform: translateY(-70%) rotate(45deg);
+        }
 
-.stat-label {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
+        select, input {
+            appearance: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.875rem 2.5rem 0.875rem 1.25rem;
+            border-radius: var(--radius);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
 
-.table-container {
-    background: var(--surface);
-    border-radius: 4px;
-    box-shadow: 0 1px 3px var(--shadow);
-    overflow: hidden;
-}
+        input {
+            padding-right: 1.25rem;
+            cursor: text;
+            width: 280px;
+        }
 
-.table-scroll {
-    height: 600px;
-    overflow-y: auto;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px var(--accent-light);
+        }
 
-table {
-    width: 100%;
-    min-width: 920px; /* Sum of all min-widths */
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-    table-layout: fixed;
-}
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+        }
 
-thead {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--surface);
-    display: flex;
-    width: 100%;
-}
+        button.reset {
+            background: var(--text-main);
+            color: var(--surface);
+            border: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: var(--radius);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-tr {
-    display: flex;
-    width: 100%;
-}
+        button.reset:hover {
+            background: var(--accent);
+            transform: translateY(-1px);
+        }
 
-th, td {
-    padding: 0.75rem 1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+        }
 
-th {
-    font-weight: 500;
-    text-align: left;
-    background: var(--surface);
-    border-bottom: 2px solid var(--border);
-}
+        .stat-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
 
-/* Fixed widths for both th and td */
-th:first-child, td:first-child { width: 35%; min-width: 200px; }
-th:nth-child(2), td:nth-child(2) { width: 15%; min-width: 120px; }
-th:nth-child(3), td:nth-child(3) { width: 10%; min-width: 100px; }
-th:nth-child(4), td:nth-child(4) { width: 10%; min-width: 100px; }
-th:nth-child(5), td:nth-child(5) { width: 10%; min-width: 100px; }
-th:nth-child(6), td:nth-child(6) { width: 10%; min-width: 100px; }
-th:nth-child(7), td:nth-child(7) { width: 10%; min-width: 100px; }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
 
-tbody {
-    position: relative;
-}
+        .stat-card:hover::before {
+            opacity: 1;
+        }
 
-td {
-    border-bottom: 1px solid var(--border);
-}
+        .stat-value {
+            font-family: var(--font-serif);
+            font-size: 3rem;
+            font-weight: 300;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
 
-.virtual-row {
-    position: absolute;
-    width: 100%;
-    left: 0;
-    background: var(--surface);
-    display: flex;
-}
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
 
-.virtual-row:nth-child(even) {
-    background-color: #f9f9f9;
-}
+        .table-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 500px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+            overflow: hidden;
+        }
 
-.virtual-row:hover {
-    background-color: #f5f5f5;
-}
+        .grid-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 0 1.5rem;
+            align-items: center;
+        }
 
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
+        .table-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 10;
+        }
 
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border);
-    border-radius: 50%;
-    border-top-color: var(--primary);
-    animation: spin 1s linear infinite;
-}
+        .header-cell {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            height: var(--row-height);
+            display: flex;
+            align-items: center;
+        }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+        .scroll-viewport {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            will-change: transform;
+        }
 
-.loading .loading-overlay {
-    display: flex;
-}
+        .v-row {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.15s ease;
+            cursor: default;
+        }
 
-.result-count {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    font-weight: 500;
-}
+        .v-row:hover {
+            background-color: var(--surface-hover);
+        }
 
-/* Add responsive adjustments for the header and filters on very small screens */
-@media (max-width: 576px) {
-    .header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filters {
-        grid-template-columns: 1fr;
-    }
-}
+        .v-cell {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .v-cell.numeric {
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader-pulse {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .grid-row { min-width: 900px; }
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+            input { width: 100%; }
+            .layout { padding: 1rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="loading-overlay">
-        <div class="loading-spinner"></div>
+
+    <div class="loader-overlay active" id="loader">
+        <div class="loader-pulse"></div>
     </div>
 
-    <div class="container">
-        <div class="header">
-            <h1>Pharmacy Dashboard</h1>
-            <select class="database-switch" id="databaseSelect">
-                <option value="workforce">Workforce Database</option>
-                <option value="student">Student Database</option>
-            </select>
-        </div>
+    <div class="layout">
+        <header class="header">
+            <div class="title-group">
+                <h1>Apothecary Intelligence</h1>
+                <p>Systemic tracking of pharmaceutical distribution and workforce analytics.</p>
+            </div>
+            <div class="controls">
+                <div class="select-wrapper">
+                    <select id="databaseSelect">
+                        <option value="workforce">Workforce Logistics</option>
+                        <option value="student">Student Operations</option>
+                    </select>
+                </div>
+            </div>
+        </header>
 
-        <div class="filters">
-            <input type="text" id="search" placeholder="Search medications..." class="filter-input">
-            <select id="pharmacy" class="filter-input"></select>
-            <select id="region" class="filter-input"></select>
-            <select id="month" class="filter-input"></select>
-            <select id="method" class="filter-input"></select>
-            <select id="unit" class="filter-input"></select>
-            <button id="resetFilters" class="reset-filters">Reset Filters</button>
+        <div class="filter-grid">
+            <input type="text" id="search" placeholder="Search medication nomenclature...">
+            <div class="select-wrapper"><select id="pharmacy"><option value="">All Pharmacies</option></select></div>
+            <div class="select-wrapper"><select id="region"><option value="">All Regions</option></select></div>
+            <div class="select-wrapper"><select id="month"><option value="">All Months</option></select></div>
+            <div class="select-wrapper"><select id="method"><option value="">All Methods</option></select></div>
+            <div class="select-wrapper"><select id="unit"><option value="">All Unit Types</option></select></div>
+            <button class="reset" id="resetFilters">Clear Filters</button>
         </div>
-
-        <div class="result-count" id="resultCount"></div>
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value" id="totalUnits">-</div>
-                <div class="stat-label">Total Units Sold</div>
+                <div class="stat-value" id="totalUnits">0</div>
+                <div class="stat-label">Volume Distributed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalMeds">-</div>
-                <div class="stat-label">Unique Medications</div>
+                <div class="stat-value" id="totalMeds">0</div>
+                <div class="stat-label">Unique Compounds</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalPharmacies">-</div>
-                <div class="stat-label">Active Pharmacies</div>
+                <div class="stat-value" id="totalPharmacies">0</div>
+                <div class="stat-label">Active Facilities</div>
             </div>
         </div>
 
-    <div class="table-container">
-        <div class="table-scroll" id="tableScroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Medication</th>
-                        <th>Pharmacy</th>
-                        <th>Region</th>
-                        <th>Month</th>
-                        <th>Units Sold</th>
-                        <th>Unit Type</th>
-                        <th>Method</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+        <div class="table-container">
+            <div class="table-header grid-row">
+                <div class="header-cell">Medication</div>
+                <div class="header-cell">Facility</div>
+                <div class="header-cell">Region</div>
+                <div class="header-cell">Period</div>
+                <div class="header-cell">Volume</div>
+                <div class="header-cell">Classification</div>
+                <div class="header-cell">Methodology</div>
+            </div>
+            <div class="scroll-viewport" id="scrollContainer">
+                <div id="scrollSpacer"></div>
+                <div id="scrollContent"></div>
+            </div>
+            <div class="status-bar">
+                <span id="resultCount">Synchronizing data...</span>
+                <span id="activeFilters">System nominal</span>
+            </div>
         </div>
     </div>
 
     <script>
-// Firebase configuration and initialization
-const firebaseConfigs = {
-    workforce: {
-        apiKey: "AIzaSyCziPixswDPCbYf1zuxdR0A_Z4KgRSrc0I",
-        databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com",
-    },
-    student: {
-        apiKey: "AIzaSyCSqnxDsN3xLLXiOv7mDZKMsH1rIvWUXDM",
-        databaseURL: "https://plan-c-464c2-default-rtdb.firebaseio.com",
-    }
-};
+        const ROW_HEIGHT = 56;
+        const CACHE = new Map();
+        const URLS = {
+            workforce: "https://plan-b-d4c36-default-rtdb.firebaseio.com/pharmacyData.json",
+            student: "https://plan-c-464c2-default-rtdb.firebaseio.com/pharmacyData.json"
+        };
 
-let apps = {};
-let currentApp;
-let dataCache = new Map();
-let filteredData = [];
+        const state = {
+            data:[],
+            filtered:[],
+            db: 'workforce',
+            filters: { search: '', pharmacy: '', region: '', month: '', method: '', unit: '' }
+        };
 
-// Store all unique values for each filter
-let filterOptions = {
-    pharmacy: new Set(),
-    region: new Set(),
-    month: new Set(),
-    method: new Set(),
-    unit: new Set(),
-    name: new Set()
-};
+        const DOM = {
+            loader: document.getElementById('loader'),
+            dbSelect: document.getElementById('databaseSelect'),
+            search: document.getElementById('search'),
+            pharmacy: document.getElementById('pharmacy'),
+            region: document.getElementById('region'),
+            month: document.getElementById('month'),
+            method: document.getElementById('method'),
+            unit: document.getElementById('unit'),
+            reset: document.getElementById('resetFilters'),
+            totalUnits: document.getElementById('totalUnits'),
+            totalMeds: document.getElementById('totalMeds'),
+            totalPharmacies: document.getElementById('totalPharmacies'),
+            resultCount: document.getElementById('resultCount'),
+            activeFilters: document.getElementById('activeFilters'),
+            scrollContainer: document.getElementById('scrollContainer'),
+            scrollSpacer: document.getElementById('scrollSpacer'),
+            scrollContent: document.getElementById('scrollContent')
+        };
 
-const elements = {
-    databaseSelect: document.getElementById('databaseSelect'),
-    search: document.getElementById('search'),
-    pharmacy: document.getElementById('pharmacy'),
-    region: document.getElementById('region'),
-    month: document.getElementById('month'),
-    method: document.getElementById('method'),
-    unit: document.getElementById('unit'),
-    tableBody: document.getElementById('tableBody'),
-    totalUnits: document.getElementById('totalUnits'),
-    totalMeds: document.getElementById('totalMeds'),
-    totalPharmacies: document.getElementById('totalPharmacies'),
-    loadingOverlay: document.querySelector('.loading-overlay'),
-    filtersContainer: document.querySelector('.filters'),
-    resetFilters: document.getElementById('resetFilters'),
-    resultCount: document.getElementById('resultCount')
-};
+        let virtualNodes =[];
+        let animationFrameId = null;
 
-function showLoading() {
-    elements.loadingOverlay.style.display = 'flex';
-}
+        function initVirtualScroller() {
+            DOM.scrollContent.style.position = 'absolute';
+            DOM.scrollContent.style.top = '0';
+            DOM.scrollContent.style.left = '0';
+            DOM.scrollContent.style.width = '100%';
 
-function hideLoading() {
-    elements.loadingOverlay.style.display = 'none';
-}
+            const viewportHeight = window.innerHeight * 0.7; 
+            const nodeCount = Math.ceil(viewportHeight / ROW_HEIGHT) + 4;
 
-async function loadInitialData() {
-    showLoading();
-    try {
-        const snapshot = await currentApp.database().ref('pharmacyData').once('value');
-        const data = snapshot.val();
-        if (!data) {
-            throw new Error('No data available');
+            for (let i = 0; i < nodeCount; i++) {
+                const row = document.createElement('div');
+                row.className = 'grid-row v-row';
+                row.style.height = `${ROW_HEIGHT}px`;
+                row.style.position = 'absolute';
+                row.style.left = '0';
+                row.style.right = '0';
+                row.style.display = 'none';
+
+                const cells = Array.from({length: 7}).map((_, idx) => {
+                    const cell = document.createElement('div');
+                    cell.className = `v-cell ${idx === 4 ? 'numeric' : ''}`;
+                    row.appendChild(cell);
+                    return cell;
+                });
+
+                DOM.scrollContent.appendChild(row);
+                virtualNodes.push({ row, cells, index: -1 });
+            }
+
+            DOM.scrollContainer.addEventListener('scroll', () => {
+                if (!animationFrameId) {
+                    animationFrameId = requestAnimationFrame(() => {
+                        updateVirtualScroller();
+                        animationFrameId = null;
+                    });
+                }
+            }, { passive: true });
         }
-        
-        const flatData = Object.values(data).flat();
-        dataCache.set(currentApp.name, flatData);
-        
-        // Initialize filter options
-        initializeFilterOptions(flatData);
-        
-        // Initialize filters and display
-        updateFilters();
-        applyFilters();
-    } catch (error) {
-        console.error('Error loading data:', error);
-        elements.tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    Error loading data: ${error.message}. Please try again.
-                </td>
-            </tr>
-        `;
-    } finally {
-        hideLoading();
-    }
-}
 
-function initializeFilterOptions(data) {
-    // Reset filter options
-    filterOptions = {
-        pharmacy: new Set(),
-        region: new Set(),
-        month: new Set(),
-        method: new Set(),
-        unit: new Set(),
-        name: new Set()
-    };
+        function updateVirtualScroller(force = false) {
+            const scrollTop = DOM.scrollContainer.scrollTop;
+            const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 1);
+            const endIndex = Math.min(state.filtered.length - 1, startIndex + virtualNodes.length - 1);
 
-    // Populate filter options from data
-    data.forEach(item => {
-        filterOptions.pharmacy.add(item.pharmacy);
-        filterOptions.region.add(item.region);
-        filterOptions.month.add(item.month);
-        filterOptions.method.add(item.method);
-        filterOptions.unit.add(item.unit);
-        filterOptions.name.add(item.name);
-    });
-}
+            let nodeIdx = 0;
+            for (let i = startIndex; i <= endIndex; i++) {
+                const node = virtualNodes[nodeIdx];
+                if (force || node.index !== i) {
+                    node.index = i;
+                    const item = state.filtered[i];
+                    node.row.style.transform = `translateY(${i * ROW_HEIGHT}px)`;
+                    node.row.style.display = 'grid';
+                    
+                    node.cells[0].textContent = item.name;
+                    node.cells[1].textContent = item.pharmacy;
+                    node.cells[2].textContent = item.region;
+                    node.cells[3].textContent = item.month;
+                    node.cells[4].textContent = new Intl.NumberFormat().format(item.unitSold);
+                    node.cells[5].textContent = item.unit;
+                    node.cells[6].textContent = item.method;
+                }
+                nodeIdx++;
+            }
 
-function updateFilters() {
-    const filterKeys = ['pharmacy', 'region', 'month', 'method', 'unit'];
-    
-    filterKeys.forEach(key => {
-        const select = elements[key];
-        const currentValue = select.value;
-        
-        // Create sorted array of options
-        const options = Array.from(filterOptions[key]).sort();
-        
-        // Create document fragment for better performance
-        const fragment = document.createDocumentFragment();
-        
-        // Add default "All" option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = `All ${key.charAt(0).toUpperCase() + key.slice(1)}s`;
-        fragment.appendChild(defaultOption);
-        
-        // Add all other options
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            fragment.appendChild(optionElement);
+            while (nodeIdx < virtualNodes.length) {
+                const node = virtualNodes[nodeIdx];
+                node.index = -1;
+                node.row.style.display = 'none';
+                nodeIdx++;
+            }
+        }
+
+        async function loadData() {
+            DOM.loader.classList.add('active');
+            try {
+                if (!CACHE.has(state.db)) {
+                    const response = await fetch(URLS[state.db]);
+                    const raw = await response.json();
+                    CACHE.set(state.db, Object.values(raw).flat());
+                }
+                state.data = CACHE.get(state.db);
+                processData();
+            } catch (err) {
+                DOM.resultCount.textContent = "Telemetry disruption detected.";
+            } finally {
+                DOM.loader.classList.remove('active');
+            }
+        }
+
+        function processData() {
+            populateOptions();
+            applyFilters();
+        }
+
+        function populateOptions() {
+            const keys = ['pharmacy', 'region', 'month', 'method', 'unit'];
+            const sets = Object.fromEntries(keys.map(k => [k, new Set()]));
+            
+            state.data.forEach(item => {
+                keys.forEach(k => sets[k].add(item[k]));
+            });
+
+            keys.forEach(key => {
+                const select = DOM[key];
+                const current = select.value;
+                const options = Array.from(sets[key]).sort();
+                
+                select.innerHTML = `<option value="">All ${key.charAt(0).toUpperCase() + key.slice(1)}s</option>`;
+                const frag = document.createDocumentFragment();
+                
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    frag.appendChild(el);
+                });
+                
+                select.appendChild(frag);
+                if (options.includes(current)) select.value = current;
+            });
+        }
+
+        function applyFilters() {
+            const searchLower = state.filters.search.toLowerCase();
+            
+            state.filtered = state.data.filter(item => {
+                if (searchLower && !item.name.toLowerCase().includes(searchLower)) return false;
+                for (const key of['pharmacy', 'region', 'month', 'method', 'unit']) {
+                    if (state.filters[key] && item[key] !== state.filters[key]) return false;
+                }
+                return true;
+            });
+
+            updateUI();
+        }
+
+        function updateUI() {
+            let units = 0;
+            const meds = new Set();
+            const pharms = new Set();
+
+            state.filtered.forEach(item => {
+                units += item.unitSold;
+                meds.add(item.name);
+                pharms.add(item.pharmacy);
+            });
+
+            const formatter = new Intl.NumberFormat();
+            
+            animateValue(DOM.totalUnits, units);
+            animateValue(DOM.totalMeds, meds.size);
+            animateValue(DOM.totalPharmacies, pharms.size);
+
+            DOM.scrollSpacer.style.height = `${state.filtered.length * ROW_HEIGHT}px`;
+            updateVirtualScroller(true);
+
+            DOM.resultCount.textContent = `Displaying ${formatter.format(state.filtered.length)} records`;
+            
+            const activeCount = Object.values(state.filters).filter(v => v !== '').length;
+            DOM.activeFilters.textContent = activeCount ? `${activeCount} telemetry filters active` : 'System nominal';
+        }
+
+        function animateValue(obj, end) {
+            const start = parseInt(obj.textContent.replace(/,/g, '')) || 0;
+            if (start === end) return;
+            
+            const duration = 800;
+            const startTime = performance.now();
+            const formatter = new Intl.NumberFormat();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                const current = Math.floor(start + (end - start) * easeOut);
+                obj.textContent = formatter.format(current);
+
+                if (progress < 1) requestAnimationFrame(update);
+                else obj.textContent = formatter.format(end);
+            }
+            requestAnimationFrame(update);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function bindEvents() {
+            DOM.dbSelect.addEventListener('change', (e) => {
+                state.db = e.target.value;
+                loadData();
+            });
+
+            const handleFilter = (key) => (e) => {
+                state.filters[key] = e.target.value;
+                applyFilters();
+            };
+
+            DOM.search.addEventListener('input', debounce((e) => {
+                state.filters.search = e.target.value;
+                applyFilters();
+            }, 200));['pharmacy', 'region', 'month', 'method', 'unit'].forEach(key => {
+                DOM[key].addEventListener('change', handleFilter(key));
+            });
+
+            DOM.reset.addEventListener('click', () => {
+                state.filters = { search: '', pharmacy: '', region: '', month: '', method: '', unit: '' };
+                DOM.search.value = '';
+                ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(k => DOM[k].value = '');
+                applyFilters();
+            });
+
+            window.addEventListener('resize', debounce(() => {
+                updateVirtualScroller(true);
+            }, 100));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initVirtualScroller();
+            bindEvents();
+            loadData();
         });
-        
-        // Replace existing options
-        select.innerHTML = '';
-        select.appendChild(fragment);
-        
-        // Restore selected value if it exists
-        if (currentValue && options.includes(currentValue)) {
-            select.value = currentValue;
-        }
-    });
-}
-
-function applyFilters() {
-    const data = dataCache.get(currentApp.name);
-    if (!data) return;
-    
-    const searchTerm = elements.search.value.toLowerCase();
-    
-    // Apply all filters in a single pass
-    filteredData = data.filter(item => {
-        // Check search term
-        if (searchTerm && !item.name.toLowerCase().includes(searchTerm)) {
-            return false;
-        }
-        
-        // Check each filter
-        const filters = ['pharmacy', 'region', 'month', 'method', 'unit'];
-        return filters.every(filter => {
-            const selectedValue = elements[filter].value;
-            return !selectedValue || item[filter] === selectedValue;
-        });
-    });
-
-    // Update the UI
-    updateStats(filteredData);
-    renderTable(filteredData);
-    updateActiveFiltersDisplay();
-    updateResultCount(filteredData.length);
-    updateAvailableOptions();
-}
-
-function updateAvailableOptions() {
-    // Get currently applied filters
-    const currentFilters = {
-        pharmacy: elements.pharmacy.value,
-        region: elements.region.value,
-        month: elements.month.value,
-        method: elements.method.value,
-        unit: elements.unit.value
-    };
-
-    // Create sets of available options based on filtered data
-    const availableOptions = {
-        pharmacy: new Set(),
-        region: new Set(),
-        month: new Set(),
-        method: new Set(),
-        unit: new Set()
-    };
-
-    // Populate available options from filtered data
-    filteredData.forEach(item => {
-        Object.keys(availableOptions).forEach(key => {
-            availableOptions[key].add(item[key]);
-        });
-    });
-
-    // Update each filter's options while preserving current selections
-    Object.keys(currentFilters).forEach(filter => {
-        const select = elements[filter];
-        const currentValue = select.value;
-        
-        // Get available options for this filter
-        const options = Array.from(availableOptions[filter]).sort();
-        
-        // Create fragment with new options
-        const fragment = document.createDocumentFragment();
-        
-        // Add "All" option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = `All ${filter.charAt(0).toUpperCase() + filter.slice(1)}s`;
-        fragment.appendChild(defaultOption);
-        
-        // Add available options
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            fragment.appendChild(optionElement);
-        });
-        
-        // Replace options and restore selection
-        select.innerHTML = '';
-        select.appendChild(fragment);
-        if (currentValue && options.includes(currentValue)) {
-            select.value = currentValue;
-        }
-    });
-}
-
-function updateStats(data) {
-    const stats = data.reduce((acc, item) => {
-        acc.units += item.unitSold;
-        acc.meds.add(item.name);
-        acc.pharmacies.add(item.pharmacy);
-        return acc;
-    }, { units: 0, meds: new Set(), pharmacies: new Set() });
-
-    elements.totalUnits.textContent = stats.units.toLocaleString();
-    elements.totalMeds.textContent = stats.meds.size.toLocaleString();
-    elements.totalPharmacies.textContent = stats.pharmacies.size.toLocaleString();
-}
-
-function updateActiveFiltersDisplay() {
-    const activeFilters = ['pharmacy', 'region', 'month', 'method', 'unit'].filter(filter => 
-        elements[filter].value !== ''
-    );
-    
-    if (elements.search.value) {
-        activeFilters.push('search');
-    }
-
-    const activeCount = activeFilters.length;
-    elements.filtersContainer.setAttribute(
-        'data-active-filters',
-        activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
-    );
-
-    // Update visual state of filters
-    Object.entries(elements).forEach(([key, element]) => {
-        if (['pharmacy', 'region', 'month', 'method', 'unit', 'search'].includes(key)) {
-            element.classList.toggle('active', activeFilters.includes(key));
-        }
-    });
-}
-
-function updateResultCount(count) {
-    elements.resultCount.textContent = `Showing ${count.toLocaleString()} results`;
-}
-
-function renderTable(data) {
-    const fragment = document.createDocumentFragment();
-    data.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.pharmacy}</td>
-            <td>${item.region}</td>
-            <td>${item.month}</td>
-            <td>${item.unitSold.toLocaleString()}</td>
-            <td>${item.unit}</td>
-            <td>${item.method}</td>
-        `;
-        fragment.appendChild(row);
-    });
-    elements.tableBody.innerHTML = '';
-    elements.tableBody.appendChild(fragment);
-}
-
-const debounce = (func, wait) => {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-};
-
-function initializeFirebase() {
-    try {
-        apps.workforce = firebase.initializeApp(firebaseConfigs.workforce);
-        apps.student = firebase.initializeApp(firebaseConfigs.student, 'secondary');
-        currentApp = apps.workforce;
-    } catch (error) {
-        console.error('Firebase initialization error:', error);
-        alert('Error initializing database connection. Please refresh the page.');
-    }
-}
-
-function switchDatabase() {
-    const dbType = elements.databaseSelect.value;
-    currentApp = apps[dbType];
-    if (dataCache.has(currentApp.name)) {
-        updateFilters();
-        applyFilters();
-    } else {
-        loadInitialData();
-    }
-}
-
-function resetFilters() {
-    elements.search.value = '';
-    ['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
-        elements[filter].value = '';
-    });
-    applyFilters();
-}
-
-// Event Listeners
-elements.databaseSelect.addEventListener('change', switchDatabase);
-elements.search.addEventListener('input', debounce(applyFilters, 150));
-elements.resetFilters.addEventListener('click', resetFilters);
-
-['pharmacy', 'region', 'month', 'method', 'unit'].forEach(filter => {
-    elements[filter].addEventListener('change', applyFilters);
-});
-
-// Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
-    initializeFirebase();
-    loadInitialData();
-});
     </script>
 </body>
 </html>
