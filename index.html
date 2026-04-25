@@ -6,1548 +6,1390 @@
 <title>LX Database</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
 try {
-const savedTheme = localStorage.getItem('lx-theme') || 'system';
-document.documentElement.setAttribute('data-theme', savedTheme);
-} catch (e) {
-document.documentElement.setAttribute('data-theme', 'system');
+  const t = localStorage.getItem('lx-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+} catch(e) {
+  document.documentElement.setAttribute('data-theme', 'dark');
 }
 </script>
 <style>
 :root {
-color-scheme: light;
---bg: #F5F5F2;
---surface: #FFFFFF;
---surface-hover: #F0F0ED;
---border: #DCDCD6;
---border-focus: #224A3A;
---text: #111312;
---text-muted: #555957;
---accent: #224A3A;
---accent-light: #E8EFEA;
---accent-text: #FFFFFF;
---shadow: 0 6px 20px rgba(17, 19, 18, 0.06);
---radius: 8px;
---font-sans: 'IBM Plex Sans', system-ui, sans-serif;
---font-serif: 'IBM Plex Serif', Georgia, serif;
---noise-opacity: 0.5;
---row-height: 58px;
+  --bg: #0A0908;
+  --bg2: #0F0E0D;
+  --surface: #141210;
+  --surface2: #1A1814;
+  --border: rgba(240,237,230,0.1);
+  --border-strong: rgba(240,237,230,0.18);
+  --border-focus: #B8975A;
+  --text: #F2EFE8;
+  --text-muted: #A89F8E;
+  --text-dim: #6E6760;
+  --gold: #C9A96E;
+  --gold-light: #DEC08E;
+  --gold-dim: rgba(184,151,90,0.12);
+  --gold-glow: rgba(184,151,90,0.06);
+  --radius: 4px;
+  --radius-lg: 8px;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: 'Jost', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --row-height: 54px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color-scheme: dark;
 }
 
-:root[data-theme="dark"] {
-color-scheme: dark;
---bg: #0C0C0C;
---surface: #141414;
---surface-hover: #1E1E1E;
---border: #2A2A2A;
---border-focus: #67B896;
---text: #F5F5F5;
---text-muted: #A0A0A0;
---accent: #67B896;
---accent-light: #1A2B23;
---accent-text: #000000;
---shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
---noise-opacity: 0.2;
+:root[data-theme="light"] {
+  --bg: #E8E3DA;
+  --bg2: #DDD8CE;
+  --surface: #F4F0E8;
+  --surface2: #EAE6DC;
+  --border: rgba(18,13,8,0.16);
+  --border-strong: rgba(18,13,8,0.28);
+  --text: #15120D;
+  --text-muted: #3E3428;
+  --text-dim: #6B6055;
+  --gold: #8A6C2C;
+  --gold-light: #6E5420;
+  --gold-dim: rgba(138,108,44,0.14);
+  --gold-glow: rgba(138,108,44,0.07);
+  --noise-opacity: 0.18;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-:root[data-theme="system"] {
-color-scheme: dark;
---bg: #0C0C0C;
---surface: #141414;
---surface-hover: #1E1E1E;
---border: #2A2A2A;
---border-focus: #67B896;
---text: #F5F5F5;
---text-muted: #A0A0A0;
---accent: #67B896;
---accent-light: #1A2B23;
---accent-text: #000000;
---shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
---noise-opacity: 0.2;
-}
-}
-
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-min-height: 100vh;
-background-color: var(--bg);
-color: var(--text);
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
 }
 
 body {
-font-family: var(--font-sans);
-font-size: 16px;
-line-height: 1.6;
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
 }
 
 body::before {
-content: "";
-position: fixed;
-inset: 0;
-opacity: var(--noise-opacity);
-pointer-events: none;
-z-index: 9999;
-background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-transition: opacity 0.3s ease;
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--noise-opacity, 0.35);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(184,151,90,0.04) 0%, transparent 70%);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
 
-.container {
-max-width: 1560px;
-margin: 3rem auto;
-padding: 0 2rem;
-display: flex;
-flex-direction: column;
-gap: 2rem;
-position: relative;
-z-index: 1;
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  gap: 1.5rem;
+  opacity: 1;
+  pointer-events: all;
+  transition: opacity 0.6s ease;
 }
 
-.header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-animation: fadeIn 0.5s ease-out;
-gap: 1.5rem;
+.loader-overlay.gone { opacity: 0; pointer-events: none; }
+
+.loader-wordmark {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: var(--text);
+  opacity: 0.6;
+  text-transform: uppercase;
 }
 
-.header h1 {
-font-family: var(--font-serif);
-font-size: 2.75rem;
-font-weight: 500;
-letter-spacing: -0.02em;
-color: var(--text);
+.loader-line {
+  width: 120px;
+  height: 1px;
+  background: var(--border-strong);
+  position: relative;
+  overflow: hidden;
 }
 
-.controls-group {
-display: flex;
-align-items: center;
-gap: 1rem;
-flex-wrap: wrap;
+.loader-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-100%);
+  animation: lineLoad 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.theme-toggle {
-display: flex;
-background: var(--surface);
-border: 1px solid var(--border);
-border-radius: 20px;
-padding: 0.25rem;
-position: relative;
-box-shadow: var(--shadow);
-transition: all 0.3s ease;
+@keyframes lineLoad {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.theme-btn {
-background: none;
-border: none;
-width: 36px;
-height: 32px;
-border-radius: 16px;
-cursor: pointer;
-color: var(--text-muted);
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 1;
-transition: color 0.3s ease;
+.wrap {
+  max-width: 1640px;
+  margin: 0 auto;
+  padding: 3rem 2.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  position: relative;
+  z-index: 1;
 }
 
-.theme-btn:hover { color: var(--text); }
-.theme-btn.active { color: var(--accent); }
-
-.theme-slider {
-position: absolute;
-top: 0.25rem;
-left: 0.25rem;
-width: 36px;
-height: 32px;
-background: var(--accent-light);
-border-radius: 16px;
-transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-z-index: 0;
-pointer-events: none;
+.site-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  animation: fadeUp 0.7s ease both;
 }
 
-:root[data-theme="light"] .theme-slider { transform: translateX(0); }
-:root[data-theme="system"] .theme-slider { transform: translateX(36px); }
-:root[data-theme="dark"] .theme-slider { transform: translateX(72px); }
-
-.btn-action, select, input {
-appearance: none;
-background: var(--surface);
-border: 1px solid var(--border);
-padding: 0.75rem 2.5rem 0.75rem 1rem;
-border-radius: var(--radius);
-font-family: var(--font-sans);
-font-size: 0.95rem;
-color: var(--text);
-cursor: pointer;
-transition: all 0.2s ease;
-box-shadow: var(--shadow);
-width: 100%;
+.site-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.btn-action {
-width: auto;
-padding: 0.75rem 1.5rem;
-display: flex;
-align-items: center;
-gap: 0.5rem;
-font-weight: 500;
+.site-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 400;
 }
 
-.btn-action:hover {
-border-color: var(--border-focus);
-background: var(--surface-hover);
+.site-title h1 {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  font-style: italic;
 }
 
-input { padding-right: 1rem; cursor: text; }
-
-select:focus, input:focus, .btn-action:focus {
-outline: none;
-border-color: var(--border-focus);
-box-shadow: 0 0 0 3px var(--accent-light);
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.select-wrapper { position: relative; }
-
-.select-wrapper::after {
-content: "";
-position: absolute;
-right: 1rem;
-top: 50%;
-width: 8px;
-height: 8px;
-border-right: 2px solid var(--text-muted);
-border-bottom: 2px solid var(--text-muted);
-pointer-events: none;
-transform: translateY(-70%) rotate(45deg);
+.theme-seg {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
 }
 
-.clear-select {
-position: absolute;
-right: 2.25rem;
-top: 50%;
-transform: translateY(-50%);
-background: none;
-border: none;
-color: var(--text-muted);
-width: 24px;
-height: 24px;
-border-radius: 4px;
-display: none;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-z-index: 2;
-transition: all 0.2s ease;
+.theme-seg-btn {
+  background: none;
+  border: none;
+  width: 38px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: var(--transition);
+  position: relative;
 }
 
-.clear-select:hover {
-background: var(--surface-hover);
-color: var(--text);
+.theme-seg-btn + .theme-seg-btn { border-left: 1px solid var(--border); }
+
+.theme-seg-btn:hover { color: var(--text-muted); background: var(--surface2); }
+
+.theme-seg-btn.active { color: var(--gold); background: var(--gold-dim); }
+
+.db-select-wrap {
+  position: relative;
 }
 
-.select-wrapper.has-value .clear-select { display: flex; }
-.select-wrapper.has-value select { padding-right: 4rem; }
-
-.filters {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-gap: 1rem;
-position: relative;
-animation: fadeIn 0.5s ease-out 0.1s both;
+.db-select-wrap select {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  padding: 0 2.5rem 0 1rem;
+  height: 36px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 400;
 }
 
-select.active {
-border-color: var(--accent);
-background-color: var(--accent-light);
-color: var(--text);
-font-weight: 600;
+.db-select-wrap select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-dim);
 }
 
-.filters::after {
-content: attr(data-active-filters);
-position: absolute;
-top: -1.5rem;
-right: 0;
-font-size: 0.8rem;
-color: var(--text-muted);
-font-weight: 600;
-text-transform: uppercase;
-letter-spacing: 0.05em;
+.db-select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid var(--text-muted);
+  border-bottom: 1px solid var(--text-muted);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
 }
 
-.search-container {
-position: relative;
-display: flex;
-align-items: center;
-grid-column: span 2;
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gold-dim);
+  border: 1px solid rgba(184,151,90,0.3);
+  padding: 0 1.25rem;
+  height: 36px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 400;
 }
 
-.search-container input {
-padding-left: 3rem;
-padding-right: 6rem;
-font-size: 0.95rem;
+.export-btn:hover {
+  background: rgba(184,151,90,0.2);
+  border-color: rgba(184,151,90,0.5);
 }
 
-.search-icon {
-position: absolute;
-left: 1.1rem;
-color: var(--text-muted);
-pointer-events: none;
-transition: color 0.2s ease;
-}
-
-.search-container:focus-within .search-icon { color: var(--accent); }
-
-.search-actions {
-position: absolute;
-right: 0.6rem;
-display: flex;
-align-items: center;
-gap: 0.4rem;
-}
-
-.shortcut-hint {
-display: flex;
-align-items: center;
-justify-content: center;
-height: 24px;
-padding: 0 8px;
-border: 1px solid var(--border);
-border-radius: 4px;
-font-size: 0.75rem;
-color: var(--text-muted);
-background: var(--bg);
-font-family: monospace;
-pointer-events: none;
-transition: opacity 0.3s ease;
-}
-
-.search-container.has-value .shortcut-hint { opacity: 0; }
-
-.exact-match-btn {
-background: transparent;
-border: 1px solid transparent;
-border-radius: 4px;
-width: 28px;
-height: 28px;
-display: flex;
-align-items: center;
-justify-content: center;
-color: var(--text-muted);
-cursor: pointer;
-transition: all 0.2s ease;
-}
-
-.exact-match-btn:hover {
-background: var(--surface-hover);
-color: var(--text);
-}
-
-.exact-match-btn.active {
-background: var(--accent-light);
-color: var(--accent);
-border-color: var(--border-focus);
-}
-
-.reset-filters {
-grid-column: 1 / -1;
-background-color: var(--accent);
-color: var(--accent-text);
-cursor: pointer;
-border: none;
-padding: 0.75rem 1.5rem;
-border-radius: var(--radius);
-font-family: var(--font-sans);
-font-weight: 500;
-font-size: 0.95rem;
-transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.reset-filters:hover { opacity: 0.95; transform: translateY(-1px); }
-
-.group-dock-container {
-display: flex;
-flex-wrap: wrap;
-align-items: flex-start;
-gap: 1rem;
-animation: fadeIn 0.5s ease-out 0.15s both;
-}
-
-.group-dock {
-display: flex;
-flex-wrap: wrap;
-gap: 0.6rem;
-align-items: center;
-background: var(--surface);
-padding: 0.75rem 1.5rem;
-border-radius: var(--radius);
-border: 1px solid var(--border);
-box-shadow: var(--shadow);
-flex: 1;
-}
-
-.group-label {
-font-size: 0.8rem;
-font-weight: 600;
-color: var(--text-muted);
-text-transform: uppercase;
-letter-spacing: 0.05em;
-margin-right: 0.5rem;
-}
-
-.group-pill {
-background: var(--bg);
-border: 1px solid var(--border);
-padding: 0.4rem 1rem;
-border-radius: 20px;
-font-size: 0.85rem;
-color: var(--text);
-cursor: pointer;
-transition: all 0.2s ease;
-font-family: var(--font-sans);
-font-weight: 500;
-}
-
-.group-pill:hover { border-color: var(--border-focus); }
-
-.group-pill.active {
-background: var(--accent);
-color: var(--accent-text);
-border-color: var(--accent);
-}
-
-.duplicate-alert {
-font-size: 0.85rem;
-color: #115E59;
-background: #CCFBF1;
-padding: 0.75rem 1.25rem;
-border-radius: var(--radius);
-display: none;
-flex-direction: column;
-gap: 0.25rem;
-border: 1px solid #99F6E4;
-animation: fadeIn 0.5s ease-out;
-box-shadow: var(--shadow);
-max-width: 600px;
-cursor: pointer;
-transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.duplicate-alert:hover {
-transform: translateY(-2px);
-box-shadow: 0 8px 24px rgba(17, 19, 18, 0.12);
-}
-
-.duplicate-header {
-display: flex;
-align-items: center;
-gap: 0.6rem;
-font-weight: 500;
-}
-
-.duplicate-header strong {
-color: #0F766E;
-font-weight: 700;
-}
-
-:root[data-theme="dark"] .duplicate-alert {
-background: #115E59;
-color: #CCFBF1;
-border-color: #0F766E;
-}
-
-:root[data-theme="dark"] .duplicate-alert:hover {
-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-}
-
-:root[data-theme="dark"] .duplicate-header strong {
-color: #FFFFFF;
-}
-
-.result-count {
-font-size: 0.9rem;
-color: var(--text-muted);
-font-weight: 500;
-animation: fadeIn 0.5s ease-out 0.15s both;
-}
-
-.stats-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-gap: 1.5rem;
-animation: fadeIn 0.5s ease-out 0.2s both;
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: fadeUp 0.7s ease 0.1s both;
 }
 
 .stat-card {
-background: var(--surface);
-padding: 1.75rem;
-border-radius: var(--radius);
-border: 1px solid var(--border);
-box-shadow: var(--shadow);
-transition: transform 0.2s ease, border-color 0.3s ease;
+  background: var(--surface);
+  padding: 2rem 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: var(--transition);
 }
 
-.stat-card:hover {
-transform: translateY(-2px);
-border-color: var(--border-focus);
-}
+.stat-card:hover { background: var(--surface2); }
 
-.stat-value {
-font-family: var(--font-serif);
-font-size: 2.75rem;
-font-weight: 400;
-color: var(--accent);
-line-height: 1.1;
-margin-bottom: 0.5rem;
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 3.75rem;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-style: italic;
 }
 
 .stat-label {
-color: var(--text-muted);
-font-size: 0.85rem;
-font-weight: 600;
-text-transform: uppercase;
-letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 400;
 }
 
-.table-container {
-background: var(--surface);
-border-radius: var(--radius);
-border: 1px solid var(--border);
-box-shadow: var(--shadow);
-overflow: hidden;
-display: flex;
-flex-direction: column;
-height: 650px;
-animation: fadeIn 0.5s ease-out 0.25s both;
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeUp 0.7s ease 0.15s both;
 }
 
-.table-grid-row {
-display: grid;
-gap: 1rem;
-padding: 0 1.5rem;
-align-items: center;
-min-width: 1000px;
+.filter-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.table-header {
-background: var(--surface);
-border-bottom: 2px solid var(--border);
-z-index: 10;
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.header-cell {
-font-size: 0.8rem;
-text-transform: uppercase;
-letter-spacing: 0.05em;
-color: var(--text-muted);
-font-weight: 600;
-height: 56px;
-display: flex;
-align-items: center;
-transition: color 0.2s ease;
+.search-field svg.s-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-dim);
+  pointer-events: none;
+  transition: var(--transition);
 }
 
-.header-cell.sortable {
-cursor: pointer;
-user-select: none;
-position: relative;
+.search-field:focus-within svg.s-icon { color: var(--gold); }
+
+.search-field input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  padding: 0 3rem 0 2.75rem;
+  height: 40px;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text);
+  transition: var(--transition);
 }
 
-.header-cell.sortable:hover { color: var(--text); }
+.search-field input::placeholder { color: var(--text-dim); }
 
-.sort-icon {
-margin-left: 0.5rem;
-opacity: 0.2;
-transition: opacity 0.2s, transform 0.2s;
+.search-field input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--surface2);
 }
 
-.header-cell.sortable[data-dir="asc"] { color: var(--accent); }
-.header-cell.sortable[data-dir="asc"] .sort-icon { opacity: 1; transform: rotate(180deg); }
+.exact-btn {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: 1px solid transparent;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: var(--transition);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+}
 
-.header-cell.sortable[data-dir="desc"] { color: var(--accent); }
-.header-cell.sortable[data-dir="desc"] .sort-icon { opacity: 1; transform: rotate(0deg); }
+.exact-btn:hover { color: var(--text-muted); background: var(--surface2); }
+.exact-btn.active { color: var(--gold); background: var(--gold-dim); border-color: rgba(184,151,90,0.25); }
 
-.table-scroll {
-flex: 1;
-overflow-y: auto;
-overflow-x: auto;
-position: relative;
-will-change: transform;
+.filter-sel-wrap {
+  position: relative;
+}
+
+.filter-sel-wrap select {
+  appearance: none;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  padding: 0 2rem 0 0.875rem;
+  height: 40px;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-sel-wrap select:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--surface2);
+}
+
+.filter-sel-wrap select.active {
+  border-color: rgba(184,151,90,0.4);
+  background: var(--gold-dim);
+  color: var(--gold-light);
+  font-weight: 400;
+}
+
+.filter-sel-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid var(--text-muted);
+  border-bottom: 1px solid var(--text-muted);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+.filter-sel-wrap .clr {
+  position: absolute;
+  right: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.filter-sel-wrap.has-val .clr { display: flex; }
+.filter-sel-wrap.has-val::after { right: 2.4rem; }
+
+.tools-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.pill-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.group-pill {
+  background: none;
+  border: 1px solid var(--border-strong);
+  padding: 0 0.875rem;
+  height: 30px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 400;
+}
+
+.group-pill:hover { border-color: var(--border-focus); color: var(--text); }
+
+.group-pill.active {
+  background: var(--gold-dim);
+  border-color: rgba(184,151,90,0.35);
+  color: var(--gold-light);
+}
+
+.sep { width: 1px; height: 20px; background: var(--border-strong); }
+
+.reset-btn {
+  background: none;
+  border: 1px solid var(--border-strong);
+  padding: 0 1rem;
+  height: 30px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.reset-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+.dup-notice {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.125rem;
+  background: rgba(184,151,90,0.06);
+  border: 1px solid rgba(184,151,90,0.2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-left: auto;
+}
+
+.dup-notice:hover { background: rgba(184,151,90,0.1); border-color: rgba(184,151,90,0.35); }
+
+.dup-notice svg { color: var(--gold); flex-shrink: 0; }
+
+.dup-notice-text {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-light);
+  font-weight: 400;
+}
+
+.dup-notice-text strong { color: var(--gold); }
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: fadeUp 0.7s ease 0.2s both;
+}
+
+.result-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 620px;
+  animation: fadeUp 0.7s ease 0.25s both;
+}
+
+.tbl-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+
+.tbl-row {
+  display: grid;
+  gap: 0;
+  padding: 0 1.75rem;
+  align-items: center;
+  min-width: 900px;
+}
+
+.tbl-head-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 48px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.tbl-head-cell:hover { color: var(--text-muted); }
+.tbl-head-cell[data-dir] { color: var(--gold); }
+
+.sort-icon { opacity: 0.2; transition: var(--transition); }
+.tbl-head-cell[data-dir="asc"] .sort-icon { opacity: 1; transform: rotate(180deg); }
+.tbl-head-cell[data-dir="desc"] .sort-icon { opacity: 1; }
+
+.tbl-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
 }
 
 .v-row {
-position: absolute;
-left: 0;
-width: 100%;
-height: var(--row-height);
-border-bottom: 1px solid var(--border);
-transition: background-color 0.15s ease;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: var(--row-height);
+  border-bottom: 1px solid var(--border);
+  display: none;
+  transition: background-color 0.15s ease;
 }
 
-.v-row:hover { background-color: var(--surface-hover); }
+.v-row:hover { background: var(--surface2); }
 
 .v-cell {
-font-size: 0.95rem;
-color: var(--text);
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.loader-overlay {
-position: fixed;
-inset: 0;
-background: var(--bg);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
-opacity: 0;
-pointer-events: none;
-transition: opacity 0.3s ease;
+:root[data-theme="light"] .v-cell { font-weight: 400; }
+:root[data-theme="light"] .stat-num { font-weight: 400; }
+:root[data-theme="light"] .tbl-head-cell { color: var(--text-muted); }
+:root[data-theme="light"] .section-label { color: var(--text-muted); }
+:root[data-theme="light"] .result-count { color: var(--text-muted); }
+
+.v-cell.num {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.loader-overlay.active { opacity: 1; pointer-events: all; }
-
-.loader-spinner {
-width: 48px;
-height: 48px;
-border: 3px solid var(--border);
-border-radius: 50%;
-border-top-color: var(--accent);
-animation: spin 0.7s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+.v-cell.source-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 400;
 }
 
 .modal-overlay {
-position: fixed;
-inset: 0;
-background: rgba(0, 0, 0, 0.5);
-z-index: 10000;
-display: none;
-align-items: center;
-justify-content: center;
-backdrop-filter: blur(4px);
-opacity: 0;
-animation: fadeIn 0.3s forwards;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
 }
 
-.modal-content {
-background: var(--surface);
-border: 1px solid var(--border);
-border-radius: var(--radius);
-width: 90%;
-max-width: 800px;
-max-height: 80vh;
-display: flex;
-flex-direction: column;
-box-shadow: var(--shadow);
-transform: translateY(20px);
-animation: slideUp 0.3s forwards;
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 860px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalIn 0.3s cubic-bezier(0.4,0,0.2,1) both;
 }
 
-@keyframes slideUp {
-to { transform: translateY(0); }
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.modal-header {
-padding: 1.5rem;
-border-bottom: 1px solid var(--border);
-display: flex;
-justify-content: space-between;
-align-items: center;
+.modal-head {
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.modal-header h2 {
-margin: 0;
-font-family: var(--font-serif);
-font-size: 1.5rem;
-color: var(--text);
-font-weight: 500;
+.modal-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text);
 }
 
-.modal-header button {
-background: none;
-border: none;
-font-size: 1.5rem;
-cursor: pointer;
-color: var(--text-muted);
-transition: color 0.2s;
-display: flex;
-align-items: center;
-justify-content: center;
+.modal-close {
+  background: none;
+  border: 1px solid var(--border-strong);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: var(--transition);
 }
 
-.modal-header button:hover {
-color: var(--text);
+.modal-close:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface2); }
+
+.modal-body { overflow-y: auto; padding: 1.5rem 1.75rem; }
+
+.dup-tbl { width: 100%; border-collapse: collapse; }
+
+.dup-tbl th {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 400;
+  padding: 0 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-strong);
 }
 
-.modal-table-container {
-overflow-y: auto;
-padding: 1.5rem;
-}
-
-.dup-table {
-width: 100%;
-border-collapse: collapse;
-text-align: left;
-}
-
-.dup-table th, .dup-table td {
-padding: 0.75rem 0.5rem;
-border-bottom: 1px solid var(--border);
-color: var(--text);
-font-size: 0.9rem;
-}
-
-.dup-table th {
-font-weight: 600;
-color: var(--text-muted);
-text-transform: uppercase;
-font-size: 0.8rem;
-letter-spacing: 0.05em;
-position: sticky;
-top: -1.5rem;
-background: var(--surface);
+.dup-tbl td {
+  padding: 0.875rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: var(--text);
 }
 
 .unmerge-btn {
-background: var(--surface);
-border: 1px solid var(--border);
-padding: 0.4rem 0.8rem;
-border-radius: 4px;
-cursor: pointer;
-color: var(--text);
-font-size: 0.8rem;
-font-weight: 500;
-transition: all 0.2s;
+  background: none;
+  border: 1px solid var(--border-strong);
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: var(--transition);
 }
 
-.unmerge-btn:hover {
-background: var(--surface-hover);
-border-color: var(--border-focus);
-}
+.unmerge-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(8px); }
-to { opacity: 1; transform: translateY(0); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 1024px) {
-.header { flex-direction: column; align-items: stretch; }
-.controls-group { justify-content: space-between; }
-.filters { grid-template-columns: 1fr; }
-.search-container { grid-column: 1 / -1; }
-.group-dock-container { flex-direction: column; align-items: stretch; }
+  .site-header { grid-template-columns: 1fr; }
+  .filter-row { grid-template-columns: 1fr 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
 }
 </style>
-
 </head>
 <body>
-<div class="loader-overlay active" id="loader">
-<div class="loader-spinner"></div>
-</div>
-<div class="container">
-<div class="header">
-<h1>LX Database</h1>
-<div class="controls-group">
-<div class="theme-toggle" role="radiogroup" aria-label="Theme selector">
-<button class="theme-btn" data-value="light" aria-label="Light theme">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-</button>
-<button class="theme-btn" data-value="system" aria-label="System theme">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-</button>
-<button class="theme-btn" data-value="dark" aria-label="Dark theme">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-</button>
-<div class="theme-slider"></div>
-</div>
-<div class="select-wrapper">
-<select id="databaseSelect">
-<option value="all">All Databases</option>
-<option value="Workforce">Workforce Database</option>
-<option value="Student">Student Database</option>
-</select>
-</div>
-<button id="downloadBtn" class="btn-action">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-Export CSV
-</button>
-</div>
+
+<div class="loader-overlay" id="loader">
+  <div class="loader-wordmark">LX</div>
+  <div class="loader-line"></div>
 </div>
 
-<div class="filters" id="filtersContainer">
-<div class="search-container" id="searchContainer">
-<svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-</svg>
-<input type="text" id="search" placeholder="Omni search across all columns..." autocomplete="off">
-<div class="search-actions">
-<button id="exactMatchBtn" class="exact-match-btn" title="Toggle Exact Phrase Match">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-<circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line>
-<line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line>
-<line x1="12" y1="22" x2="12" y2="18"></line>
-</svg>
-</button>
-<div class="shortcut-hint">/</div>
-</div>
-</div>
-<div class="select-wrapper">
-<select id="pharmacy"><option value="">All Pharmacies</option></select>
-<button class="clear-select" data-target="pharmacy" aria-label="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-</div>
-<div class="select-wrapper">
-<select id="region"><option value="">All Regions</option></select>
-<button class="clear-select" data-target="region" aria-label="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-</div>
-<div class="select-wrapper">
-<select id="month"><option value="">All Months</option></select>
-<button class="clear-select" data-target="month" aria-label="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-</div>
-<div class="select-wrapper">
-<select id="method"><option value="">All Methods</option></select>
-<button class="clear-select" data-target="method" aria-label="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-</div>
-<div class="select-wrapper">
-<select id="unit"><option value="">All Unit Types</option></select>
-<button class="clear-select" data-target="unit" aria-label="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-</div>
-<button id="resetFilters" class="reset-filters">Reset Filters</button>
-</div>
+<div class="wrap">
 
-<div class="group-dock-container">
-<div class="group-dock" id="groupDock">
-<span class="group-label">Group By:</span>
-<button class="group-pill" data-key="_source">Source</button>
-<button class="group-pill" data-key="name">Medication</button>
-<button class="group-pill" data-key="pharmacy">Pharmacy</button>
-<button class="group-pill" data-key="region">Region</button>
-<button class="group-pill" data-key="month">Month</button>
-<button class="group-pill" data-key="unit">Unit Type</button>
-<button class="group-pill" data-key="method">Method</button>
-</div>
-<div class="duplicate-alert" id="duplicateAlert">
-<div class="duplicate-header">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-<span id="duplicateText"></span>
-</div>
-</div>
-</div>
+  <header class="site-header">
+    <div class="site-title">
+      <h1>LX Database</h1>
+    </div>
+    <div class="header-controls">
+      <div class="theme-seg" role="radiogroup">
+        <button class="theme-seg-btn" data-value="light" aria-label="Light">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="theme-seg-btn" data-value="dark" aria-label="Dark">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+      <div class="db-select-wrap">
+        <select id="databaseSelect">
+          <option value="all">All Sources</option>
+          <option value="Workforce">Workforce</option>
+          <option value="Student">Student</option>
+        </select>
+      </div>
+      <button id="downloadBtn" class="export-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+    </div>
+  </header>
 
-<div class="result-count" id="resultCount">Synchronizing...</div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="totalUnits">—</div>
+      <div class="stat-label">Total Units Sold</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="totalMeds">—</div>
+      <div class="stat-label">Unique Medications</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="totalPharmacies">—</div>
+      <div class="stat-label">Active Pharmacies</div>
+    </div>
+  </div>
 
-<div class="stats-grid">
-<div class="stat-card">
-<div class="stat-value" id="totalUnits">-</div>
-<div class="stat-label">Total Units Sold</div>
-</div>
-<div class="stat-card">
-<div class="stat-value" id="totalMeds">-</div>
-<div class="stat-label">Unique Medications</div>
-</div>
-<div class="stat-card">
-<div class="stat-value" id="totalPharmacies">-</div>
-<div class="stat-label">Active Pharmacies</div>
-</div>
-</div>
+  <div class="filter-panel">
+    <div class="filter-row">
+      <div class="search-field">
+        <svg class="s-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search" placeholder="Search across all columns…" autocomplete="off">
+        <button id="exactMatchBtn" class="exact-btn" title="Exact match">Aa</button>
+      </div>
+      <div class="filter-sel-wrap" id="wPharmacy">
+        <select id="pharmacy"><option value="">All Pharmacies</option></select>
+        <button class="clr" data-target="pharmacy"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="filter-sel-wrap" id="wRegion">
+        <select id="region"><option value="">All Regions</option></select>
+        <button class="clr" data-target="region"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="filter-sel-wrap" id="wMonth">
+        <select id="month"><option value="">All Months</option></select>
+        <button class="clr" data-target="month"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="filter-sel-wrap" id="wMethod">
+        <select id="method"><option value="">All Methods</option></select>
+        <button class="clr" data-target="method"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="filter-sel-wrap" id="wUnit">
+        <select id="unit"><option value="">All Unit Types</option></select>
+        <button class="clr" data-target="unit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
 
-<div class="table-container">
-<div class="table-grid-row table-header" id="tableHeader"></div>
-<div class="table-scroll" id="scrollContainer">
-<div id="scrollSpacer"></div>
-<div id="scrollContent"></div>
-</div>
-</div>
+    <div class="tools-row">
+      <span class="section-label">Group by</span>
+      <div class="pill-group" id="groupPills">
+        <button class="group-pill" data-key="_source">Source</button>
+        <button class="group-pill" data-key="name">Medication</button>
+        <button class="group-pill" data-key="pharmacy">Pharmacy</button>
+        <button class="group-pill" data-key="region">Region</button>
+        <button class="group-pill" data-key="month">Month</button>
+        <button class="group-pill" data-key="unit">Unit Type</button>
+        <button class="group-pill" data-key="method">Method</button>
+      </div>
+      <div class="sep"></div>
+      <button id="resetFilters" class="reset-btn">Reset All</button>
+      <div class="dup-notice" id="duplicateAlert">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        <span class="dup-notice-text" id="duplicateText"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-meta">
+    <span class="result-count" id="resultCount">Synchronising…</span>
+  </div>
+
+  <div class="table-wrap">
+    <div class="tbl-header">
+      <div class="tbl-row" id="tableHeader"></div>
+    </div>
+    <div class="tbl-scroll" id="scrollContainer">
+      <div id="scrollSpacer"></div>
+      <div id="scrollContent" style="position:absolute;top:0;left:0;width:100%;"></div>
+    </div>
+  </div>
+
 </div>
 
 <div id="duplicateModal" class="modal-overlay">
-<div class="modal-content">
-<div class="modal-header">
-<h2>Merged Duplicates Details</h2>
-<button id="closeModal">&times;</button>
-</div>
-<div class="modal-table-container">
-<table class="dup-table">
-<thead>
-<tr>
-<th>Medication</th>
-<th>Pharmacy</th>
-<th>Region</th>
-<th>Merged Rows</th>
-<th>Total Units</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="duplicateTableBody"></tbody>
-</table>
-</div>
-</div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Merged Duplicates</h2>
+      <button class="modal-close" id="closeModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="dup-tbl">
+        <thead><tr><th>Medication</th><th>Pharmacy</th><th>Region</th><th>Merged Rows</th><th>Total Units</th><th></th></tr></thead>
+        <tbody id="duplicateTableBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
-const ROW_HEIGHT = 58;
+const ROW_HEIGHT = 54;
+
 const URLS = {
-workforce: "https://plan-b-d4c36-default-rtdb.firebaseio.com/pharmacyData.json",
-student: "https://plan-c-464c2-default-rtdb.firebaseio.com/pharmacyData.json"
+  workforce: "https://plan-b-d4c36-default-rtdb.firebaseio.com/pharmacyData.json",
+  student: "https://plan-c-464c2-default-rtdb.firebaseio.com/pharmacyData.json"
 };
 
 const COLUMNS = [
-{ key: '_source', label: 'Source', width: '1fr' },
-{ key: 'name', label: 'Medication', width: '2fr' },
-{ key: 'pharmacy', label: 'Pharmacy', width: '1.5fr' },
-{ key: 'region', label: 'Region', width: '1fr' },
-{ key: 'month', label: 'Month', width: '1fr' },
-{ key: 'unit', label: 'Unit Type', width: '1fr' },
-{ key: 'method', label: 'Method', width: '1fr' },
-{ key: 'unitSold', label: 'Units Sold', width: '1fr', isNum: true }
+  { key: '_source', label: 'Source', width: '0.7fr', cls: 'source-tag' },
+  { key: 'name', label: 'Medication', width: '2fr' },
+  { key: 'pharmacy', label: 'Pharmacy', width: '1.4fr' },
+  { key: 'region', label: 'Region', width: '0.9fr' },
+  { key: 'month', label: 'Month', width: '0.9fr' },
+  { key: 'unit', label: 'Unit Type', width: '0.9fr' },
+  { key: 'method', label: 'Method', width: '0.9fr' },
+  { key: 'unitSold', label: 'Units Sold', width: '0.8fr', isNum: true }
 ];
 
 const state = {
-allData: [],
-filtered: [],
-displayData: [],
-db: 'all',
-sort: { key: null, dir: 1 },
-filters: { search: '', exactMatch: false, pharmacy: '', region: '', month: '', method: '', unit: '' },
-groupBy: [],
-lastColsHash: '',
-rawGroups: new Map(),
-unmergedHashes: new Set(),
-currentMergedGroups: []
+  allData: [], filtered: [], displayData: [],
+  db: 'all',
+  sort: { key: null, dir: 1 },
+  filters: { search: '', exactMatch: false, pharmacy: '', region: '', month: '', method: '', unit: '' },
+  groupBy: [],
+  lastColsHash: '',
+  rawGroups: new Map(),
+  unmergedHashes: new Set(),
+  currentMergedGroups: []
 };
 
+const $ = id => document.getElementById(id);
 const DOM = {
-loader: document.getElementById('loader'),
-dbSelect: document.getElementById('databaseSelect'),
-search: document.getElementById('search'),
-searchContainer: document.getElementById('searchContainer'),
-exactMatchBtn: document.getElementById('exactMatchBtn'),
-downloadBtn: document.getElementById('downloadBtn'),
-pharmacy: document.getElementById('pharmacy'),
-region: document.getElementById('region'),
-month: document.getElementById('month'),
-method: document.getElementById('method'),
-unit: document.getElementById('unit'),
-reset: document.getElementById('resetFilters'),
-totalUnits: document.getElementById('totalUnits'),
-totalMeds: document.getElementById('totalMeds'),
-totalPharmacies: document.getElementById('totalPharmacies'),
-resultCount: document.getElementById('resultCount'),
-filtersContainer: document.getElementById('filtersContainer'),
-scrollContainer: document.getElementById('scrollContainer'),
-scrollSpacer: document.getElementById('scrollSpacer'),
-scrollContent: document.getElementById('scrollContent'),
-tableHeader: document.getElementById('tableHeader'),
-themeBtns: document.querySelectorAll('.theme-btn'),
-clearBtns: document.querySelectorAll('.clear-select'),
-groupPills: document.querySelectorAll('.group-pill'),
-duplicateAlert: document.getElementById('duplicateAlert'),
-duplicateText: document.getElementById('duplicateText'),
-duplicateModal: document.getElementById('duplicateModal'),
-closeModal: document.getElementById('closeModal'),
-duplicateTableBody: document.getElementById('duplicateTableBody')
+  loader: $('loader'),
+  dbSelect: $('databaseSelect'),
+  search: $('search'),
+  exactMatchBtn: $('exactMatchBtn'),
+  downloadBtn: $('downloadBtn'),
+  pharmacy: $('pharmacy'), region: $('region'),
+  month: $('month'), method: $('method'), unit: $('unit'),
+  reset: $('resetFilters'),
+  totalUnits: $('totalUnits'), totalMeds: $('totalMeds'), totalPharmacies: $('totalPharmacies'),
+  resultCount: $('resultCount'),
+  scrollContainer: $('scrollContainer'),
+  scrollSpacer: $('scrollSpacer'),
+  scrollContent: $('scrollContent'),
+  tableHeader: $('tableHeader'),
+  duplicateAlert: $('duplicateAlert'),
+  duplicateText: $('duplicateText'),
+  duplicateModal: $('duplicateModal'),
+  closeModal: $('closeModal'),
+  duplicateTableBody: $('duplicateTableBody')
 };
+
+const wrapIds = { pharmacy: 'wPharmacy', region: 'wRegion', month: 'wMonth', method: 'wMethod', unit: 'wUnit' };
 
 let virtualNodes = [];
-let animationFrameId = null;
+let rafId = null;
 
-function initThemeSwitcher() {
-let currentTheme = 'system';
-try {
-currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('lx-theme') || 'system';
-} catch (e) {}
-
-DOM.themeBtns.forEach(btn => {
-btn.classList.toggle('active', btn.dataset.value === currentTheme);
-btn.addEventListener('click', () => {
-const theme = btn.dataset.value;
-document.documentElement.setAttribute('data-theme', theme);
-try {
-localStorage.setItem('lx-theme', theme);
-} catch (e) {}
-DOM.themeBtns.forEach(b => b.classList.toggle('active', b.dataset.value === theme));
-});
-});
+function initTheme() {
+  const saved = document.documentElement.getAttribute('data-theme') || 'dark';
+  document.querySelectorAll('.theme-seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === saved);
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.value;
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem('lx-theme', t); } catch(e) {}
+      document.querySelectorAll('.theme-seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === t));
+    });
+  });
 }
 
-function getActiveColumns() {
-if (!state.groupBy.length) {
-return [...COLUMNS.slice(0, 5), COLUMNS[7], COLUMNS[5], COLUMNS[6]];
-}
-const activeKeys = [...state.groupBy, 'unitSold'];
-return COLUMNS.filter(c => activeKeys.includes(c.key));
-}
-
-function bindHeaderSort() {
-document.querySelectorAll('.table-header .header-cell.sortable').forEach(header => {
-header.addEventListener('click', () => {
-const sortKey = header.dataset.sort;
-if (state.sort.key === sortKey) {
-state.sort.dir *= -1;
-} else {
-state.sort.key = sortKey;
-state.sort.dir = 1;
-}
-applyState();
-});
-});
+function getActiveCols() {
+  if (!state.groupBy.length) {
+    return [COLUMNS[0], COLUMNS[1], COLUMNS[2], COLUMNS[3], COLUMNS[4], COLUMNS[7], COLUMNS[5], COLUMNS[6]];
+  }
+  return COLUMNS.filter(c => [...state.groupBy, 'unitSold'].includes(c.key));
 }
 
 function initVirtualScroller() {
-DOM.scrollContent.innerHTML = '';
-virtualNodes = [];
-const activeCols = getActiveColumns();
+  DOM.scrollContent.innerHTML = '';
+  virtualNodes = [];
 
-DOM.tableHeader.style.gridTemplateColumns = activeCols.map(c => c.width).join(' ');
-DOM.tableHeader.innerHTML = activeCols.map(c => {
-let dirAttr = '';
-if (state.sort.key === c.key) {
-dirAttr = `data-dir="${state.sort.dir === 1 ? 'asc' : 'desc'}"`;
-}
-return `<div class="header-cell sortable" data-sort="${c.key}" ${dirAttr}>
-${c.label}
-<svg class="sort-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-</div>`;
-}).join('');
+  const cols = getActiveCols();
+  const tpl = cols.map(c => c.width).join(' ');
 
-bindHeaderSort();
+  DOM.tableHeader.style.gridTemplateColumns = tpl;
+  DOM.tableHeader.innerHTML = cols.map(c => {
+    const dir = state.sort.key === c.key ? `data-dir="${state.sort.dir === 1 ? 'asc' : 'desc'}"` : '';
+    return `<div class="tbl-head-cell" data-sort="${c.key}" ${dir}>${c.label}<svg class="sort-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>`;
+  }).join('');
 
-DOM.scrollContent.style.position = 'absolute';
-DOM.scrollContent.style.top = '0';
-DOM.scrollContent.style.left = '0';
-DOM.scrollContent.style.width = '100%';
+  document.querySelectorAll('.tbl-head-cell').forEach(h => {
+    h.addEventListener('click', () => {
+      const k = h.dataset.sort;
+      if (state.sort.key === k) state.sort.dir *= -1;
+      else { state.sort.key = k; state.sort.dir = 1; }
+      applyState();
+    });
+  });
 
-const nodeCount = Math.ceil(650 / ROW_HEIGHT) + 4;
-for (let i = 0; i < nodeCount; i++) {
-const row = document.createElement('div');
-row.className = 'table-grid-row v-row';
-row.style.gridTemplateColumns = activeCols.map(c => c.width).join(' ');
-row.style.display = 'none';
+  const count = Math.ceil(620 / ROW_HEIGHT) + 4;
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('div');
+    row.className = 'tbl-row v-row';
+    row.style.gridTemplateColumns = tpl;
+    row.style.display = 'none';
+    const cells = cols.map(c => {
+      const cell = document.createElement('div');
+      cell.className = `v-cell${c.isNum ? ' num' : ''}${c.cls ? ' ' + c.cls : ''}`;
+      row.appendChild(cell);
+      return { el: cell, key: c.key, isNum: c.isNum };
+    });
+    DOM.scrollContent.appendChild(row);
+    virtualNodes.push({ row, cells, index: -1 });
+  }
 
-const cells = activeCols.map((c) => {
-const cell = document.createElement('div');
-cell.className = 'v-cell';
-if (c.isNum) cell.style.fontVariantNumeric = 'tabular-nums';
-row.appendChild(cell);
-return { el: cell, key: c.key, isNum: c.isNum };
-});
-
-DOM.scrollContent.appendChild(row);
-virtualNodes.push({ row, cells, index: -1 });
-}
-
-DOM.scrollContainer.removeEventListener('scroll', handleScroll);
-DOM.scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+  DOM.scrollContainer.removeEventListener('scroll', onScroll);
+  DOM.scrollContainer.addEventListener('scroll', onScroll, { passive: true });
 }
 
-function handleScroll() {
-if (!animationFrameId) {
-animationFrameId = requestAnimationFrame(() => {
-updateVirtualScroller();
-animationFrameId = null;
-});
-}
+function onScroll() {
+  if (!rafId) rafId = requestAnimationFrame(() => { renderRows(); rafId = null; });
 }
 
-function updateVirtualScroller(force = false) {
-const scrollTop = DOM.scrollContainer.scrollTop;
-const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 1);
-const endIndex = Math.min(state.displayData.length - 1, startIndex + virtualNodes.length - 1);
+function renderRows(force = false) {
+  const top = DOM.scrollContainer.scrollTop;
+  const start = Math.max(0, Math.floor(top / ROW_HEIGHT) - 1);
+  const end = Math.min(state.displayData.length - 1, start + virtualNodes.length - 1);
 
-let nodeIdx = 0;
-for (let i = startIndex; i <= endIndex; i++) {
-const node = virtualNodes[nodeIdx];
-if (force || node.index !== i) {
-node.index = i;
-const item = state.displayData[i];
-node.row.style.transform = `translateY(${i * ROW_HEIGHT}px)`;
-node.row.style.display = 'grid';
-
-node.cells.forEach(c => {
-let val = item[c.key];
-if (c.isNum) val = new Intl.NumberFormat().format(val || 0);
-c.el.textContent = val !== undefined ? val : '-';
-});
-}
-nodeIdx++;
-}
-
-while (nodeIdx < virtualNodes.length) {
-const node = virtualNodes[nodeIdx];
-node.index = -1;
-node.row.style.display = 'none';
-nodeIdx++;
-}
+  let ni = 0;
+  for (let i = start; i <= end; i++) {
+    const n = virtualNodes[ni];
+    if (force || n.index !== i) {
+      n.index = i;
+      const item = state.displayData[i];
+      n.row.style.transform = `translateY(${i * ROW_HEIGHT}px)`;
+      n.row.style.display = 'grid';
+      n.cells.forEach(c => {
+        let v = item[c.key];
+        if (c.isNum) v = new Intl.NumberFormat().format(v || 0);
+        c.el.textContent = v !== undefined ? v : '—';
+      });
+    }
+    ni++;
+  }
+  while (ni < virtualNodes.length) {
+    virtualNodes[ni].index = -1;
+    virtualNodes[ni].row.style.display = 'none';
+    ni++;
+  }
 }
 
 async function loadData() {
-DOM.loader.classList.add('active');
-try {
-const [wfRes, stRes] = await Promise.all([
-fetch(URLS.workforce),
-fetch(URLS.student)
-]);
+  try {
+    const [wfRes, stRes] = await Promise.all([fetch(URLS.workforce), fetch(URLS.student)]);
+    const wfRaw = await wfRes.json();
+    const stRaw = await stRes.json();
 
-const wfRaw = await wfRes.json();
-const stRaw = await stRes.json();
+    const parse = (raw, src) => raw
+      ? Object.values(raw).flat().map(it => ({
+          ...it, _source: src,
+          _searchStr: `${src} ${it.name} ${it.pharmacy} ${it.region} ${it.month} ${it.method} ${it.unit}`.toLowerCase()
+        }))
+      : [];
 
-const parse = (raw, source) => raw ? Object.values(raw).flat().map(item => ({
-...item,
-_source: source,
-_searchStr: `${source} ${item.name} ${item.pharmacy} ${item.region} ${item.month} ${item.method} ${item.unit}`.toLowerCase()
-})) : [];
+    const all = [...parse(wfRaw, 'Workforce'), ...parse(stRaw, 'Student')];
 
-const allRaw = [
-...parse(wfRaw, 'Workforce'),
-...parse(stRaw, 'Student')
-];
+    state.rawGroups = new Map();
+    state.unmergedHashes = new Set();
 
-state.rawGroups = new Map();
-state.unmergedHashes = new Set();
+    all.forEach(item => {
+      const h = `${item._source}|${item.name}|${item.pharmacy}|${item.region}|${item.month}|${item.unit}|${item.method}`;
+      if (!state.rawGroups.has(h)) state.rawGroups.set(h, []);
+      state.rawGroups.get(h).push({ ...item, unitSold: Number(item.unitSold) || 0 });
+    });
 
-allRaw.forEach(item => {
-const hash = `${item._source}|${item.name}|${item.pharmacy}|${item.region}|${item.month}|${item.unit}|${item.method}`;
-if (!state.rawGroups.has(hash)) {
-state.rawGroups.set(hash, []);
-}
-state.rawGroups.get(hash).push({ ...item, unitSold: Number(item.unitSold) || 0 });
-});
-
-buildBaseData();
-
-} catch (err) {
-DOM.resultCount.textContent = "Error loading database structure.";
-} finally {
-DOM.loader.classList.remove('active');
-}
+    buildBaseData();
+  } catch(err) {
+    DOM.resultCount.textContent = 'Connection error.';
+  } finally {
+    DOM.loader.classList.add('gone');
+    setTimeout(() => { if(DOM.loader.parentNode) DOM.loader.parentNode.removeChild(DOM.loader); }, 700);
+  }
 }
 
 function buildBaseData() {
-state.allData = [];
-state.currentMergedGroups = [];
-let mergedCount = 0;
+  state.allData = [];
+  state.currentMergedGroups = [];
+  let mergedCount = 0;
 
-for (const [hash, items] of state.rawGroups.entries()) {
-if (items.length > 1 && !state.unmergedHashes.has(hash)) {
-const mergedItem = { ...items[0], unitSold: 0 };
-items.forEach(i => mergedItem.unitSold += i.unitSold);
-state.allData.push(mergedItem);
+  for (const [hash, items] of state.rawGroups.entries()) {
+    if (items.length > 1 && !state.unmergedHashes.has(hash)) {
+      const m = { ...items[0], unitSold: 0 };
+      items.forEach(i => m.unitSold += i.unitSold);
+      state.allData.push(m);
+      state.currentMergedGroups.push({ hash, name: m.name, pharmacy: m.pharmacy, region: m.region, rowCount: items.length, totalUnits: m.unitSold });
+      mergedCount += items.length - 1;
+    } else {
+      items.forEach(i => state.allData.push(i));
+    }
+  }
 
-state.currentMergedGroups.push({
-hash,
-name: mergedItem.name,
-pharmacy: mergedItem.pharmacy,
-region: mergedItem.region,
-rowCount: items.length,
-totalUnits: mergedItem.unitSold
-});
+  if (mergedCount > 0) {
+    DOM.duplicateText.innerHTML = `<strong>${mergedCount}</strong> duplicate${mergedCount > 1 ? 's' : ''} merged — view`;
+    DOM.duplicateAlert.style.display = 'flex';
+  } else {
+    DOM.duplicateAlert.style.display = 'none';
+  }
 
-mergedCount += (items.length - 1);
-} else {
-items.forEach(i => state.allData.push(i));
-}
-}
-
-if (mergedCount > 0) {
-DOM.duplicateText.innerHTML = `Merged <strong>${mergedCount}</strong> duplicate record${mergedCount > 1 ? 's' : ''} to aggregate Units Sold. Click to view and unmerge.`;
-DOM.duplicateAlert.style.display = 'flex';
-} else {
-DOM.duplicateAlert.style.display = 'none';
-}
-
-applyState();
-renderDuplicateModal();
+  applyState();
+  renderDuplicateModal();
 }
 
 function renderDuplicateModal() {
-DOM.duplicateTableBody.innerHTML = '';
-if (!state.currentMergedGroups || state.currentMergedGroups.length === 0) {
-DOM.duplicateModal.style.display = 'none';
-return;
-}
-state.currentMergedGroups.forEach(group => {
-const tr = document.createElement('tr');
-tr.innerHTML = `
-<td>${group.name}</td>
-<td>${group.pharmacy}</td>
-<td>${group.region}</td>
-<td>${group.rowCount}</td>
-<td>${group.totalUnits}</td>
-<td><button class="unmerge-btn" data-hash="${group.hash}">Unmerge</button></td>
-`;
-DOM.duplicateTableBody.appendChild(tr);
-});
-
-document.querySelectorAll('.unmerge-btn').forEach(btn => {
-btn.addEventListener('click', (e) => {
-const hash = e.target.getAttribute('data-hash');
-state.unmergedHashes.add(hash);
-buildBaseData();
-});
-});
+  DOM.duplicateTableBody.innerHTML = '';
+  state.currentMergedGroups.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${g.name}</td><td>${g.pharmacy}</td><td>${g.region}</td><td>${g.rowCount}</td><td>${g.totalUnits}</td><td><button class="unmerge-btn" data-hash="${g.hash}">Unmerge</button></td>`;
+    DOM.duplicateTableBody.appendChild(tr);
+  });
+  document.querySelectorAll('.unmerge-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      state.unmergedHashes.add(e.target.getAttribute('data-hash'));
+      buildBaseData();
+    });
+  });
 }
 
 function applyState() {
-updateDropdownOptions();
+  updateDropdowns();
 
-const query = state.filters.search.toLowerCase().trim();
-const isExact = state.filters.exactMatch;
-const searchTokens = (query && !isExact) ? query.split(/\s+/) : [];
+  const q = state.filters.search.toLowerCase().trim();
+  const exact = state.filters.exactMatch;
+  const tokens = q && !exact ? q.split(/\s+/) : [];
 
-state.filtered = state.allData.filter(item => {
-if (state.db !== 'all' && item._source !== state.db) return false;
+  state.filtered = state.allData.filter(item => {
+    if (state.db !== 'all' && item._source !== state.db) return false;
+    if (q) {
+      if (exact) { if (!item._searchStr.includes(q)) return false; }
+      else { for (const t of tokens) if (!item._searchStr.includes(t)) return false; }
+    }
+    for (const k of ['pharmacy','region','month','method','unit']) {
+      if (state.filters[k] && item[k] !== state.filters[k]) return false;
+    }
+    return true;
+  });
 
-if (query) {
-if (isExact) {
-if (!item._searchStr.includes(query)) return false;
-} else {
-for (let i = 0; i < searchTokens.length; i++) {
-if (!item._searchStr.includes(searchTokens[i])) return false;
-}
-}
-}
+  if (!state.groupBy.length) {
+    state.displayData = [...state.filtered];
+  } else {
+    const map = new Map();
+    state.filtered.forEach(item => {
+      const key = state.groupBy.map(g => item[g]).join('|||');
+      if (!map.has(key)) {
+        const o = { unitSold: 0 };
+        state.groupBy.forEach(g => o[g] = item[g]);
+        map.set(key, o);
+      }
+      map.get(key).unitSold += item.unitSold;
+    });
+    state.displayData = Array.from(map.values());
+  }
 
-for (const key of ['pharmacy', 'region', 'month', 'method', 'unit']) {
-if (state.filters[key] && item[key] !== state.filters[key]) return false;
-}
-return true;
-});
+  sortData();
 
-if (state.groupBy.length === 0) {
-state.displayData = [...state.filtered];
-} else {
-const map = new Map();
-state.filtered.forEach(item => {
-const key = state.groupBy.map(g => item[g]).join('|||');
-if (!map.has(key)) {
-const newObj = { unitSold: 0 };
-state.groupBy.forEach(g => newObj[g] = item[g]);
-map.set(key, newObj);
-}
-map.get(key).unitSold += item.unitSold;
-});
-state.displayData = Array.from(map.values());
-}
+  const cols = getActiveCols();
+  const hash = cols.map(c => c.key).join('-');
+  if (state.lastColsHash !== hash) {
+    state.lastColsHash = hash;
+    initVirtualScroller();
+  }
 
-sortData();
-
-const activeCols = getActiveColumns();
-const colsHash = activeCols.map(c => c.key).join('-');
-if (state.lastColsHash !== colsHash) {
-state.lastColsHash = colsHash;
-initVirtualScroller();
+  updateUI();
 }
 
-updateUI();
-}
-
-function updateDropdownOptions() {
-const keys = ['pharmacy', 'region', 'month', 'method', 'unit'];
-
-keys.forEach(key => {
-const validItems = state.allData.filter(item => {
-if (state.db !== 'all' && item._source !== state.db) return false;
-
-const query = state.filters.search.toLowerCase().trim();
-if (query) {
-if (state.filters.exactMatch) {
-if (!item._searchStr.includes(query)) return false;
-} else {
-const tokens = query.split(/\s+/);
-for (let t of tokens) {
-if (!item._searchStr.includes(t)) return false;
-}
-}
-}
-
-for (const other of keys) {
-if (other !== key && state.filters[other] && item[other] !== state.filters[other]) return false;
-}
-return true;
-});
-
-const unique = Array.from(new Set(validItems.map(i => i[key]))).sort();
-const select = DOM[key];
-const currentVal = state.filters[key];
-
-select.innerHTML = `<option value="">All ${key.charAt(0).toUpperCase() + key.slice(1)}s</option>`;
-
-unique.forEach(opt => {
-const el = document.createElement('option');
-el.value = opt;
-el.textContent = opt;
-select.appendChild(el);
-});
-
-if (unique.includes(currentVal)) {
-select.value = currentVal;
-} else {
-state.filters[key] = '';
-select.value = '';
-}
-});
+function updateDropdowns() {
+  const keys = ['pharmacy','region','month','method','unit'];
+  keys.forEach(key => {
+    const valid = state.allData.filter(item => {
+      if (state.db !== 'all' && item._source !== state.db) return false;
+      const q = state.filters.search.toLowerCase().trim();
+      if (q) {
+        if (state.filters.exactMatch) { if (!item._searchStr.includes(q)) return false; }
+        else { const t = q.split(/\s+/); for (const tk of t) if (!item._searchStr.includes(tk)) return false; }
+      }
+      for (const other of keys) {
+        if (other !== key && state.filters[other] && item[other] !== state.filters[other]) return false;
+      }
+      return true;
+    });
+    const unique = [...new Set(valid.map(i => i[key]))].sort();
+    const sel = DOM[key];
+    const cur = state.filters[key];
+    sel.innerHTML = `<option value="">All ${key.charAt(0).toUpperCase()+key.slice(1)}s</option>`;
+    unique.forEach(o => {
+      const el = document.createElement('option');
+      el.value = el.textContent = o;
+      sel.appendChild(el);
+    });
+    if (unique.includes(cur)) sel.value = cur;
+    else { state.filters[key] = ''; sel.value = ''; }
+  });
 }
 
 function sortData() {
-if (!state.sort.key) return;
-
-const activeCols = getActiveColumns();
-if (!activeCols.find(c => c.key === state.sort.key)) {
-state.sort.key = null;
-return;
-}
-
-const { key, dir } = state.sort;
-
-state.displayData.sort((a, b) => {
-const vA = a[key];
-const vB = b[key];
-
-if (typeof vA === 'string' && typeof vB === 'string') {
-return vA.localeCompare(vB) * dir;
-}
-return ((vA || 0) - (vB || 0)) * dir;
-});
+  if (!state.sort.key) return;
+  const cols = getActiveCols();
+  if (!cols.find(c => c.key === state.sort.key)) { state.sort.key = null; return; }
+  const { key, dir } = state.sort;
+  state.displayData.sort((a, b) => {
+    const va = a[key], vb = b[key];
+    if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb) * dir;
+    return ((va || 0) - (vb || 0)) * dir;
+  });
 }
 
 function updateUI() {
-let units = 0;
-const meds = new Set();
-const pharms = new Set();
+  let units = 0;
+  const meds = new Set(), pharms = new Set();
+  state.filtered.forEach(item => { units += item.unitSold; meds.add(item.name); pharms.add(item.pharmacy); });
 
-state.filtered.forEach(item => {
-units += item.unitSold;
-meds.add(item.name);
-pharms.add(item.pharmacy);
-});
+  animateNum(DOM.totalUnits, units);
+  animateNum(DOM.totalMeds, meds.size);
+  animateNum(DOM.totalPharmacies, pharms.size);
 
-animateValue(DOM.totalUnits, units);
-animateValue(DOM.totalMeds, meds.size);
-animateValue(DOM.totalPharmacies, pharms.size);
+  DOM.scrollSpacer.style.height = `${state.displayData.length * ROW_HEIGHT}px`;
+  renderRows(true);
 
-DOM.scrollSpacer.style.height = `${state.displayData.length * ROW_HEIGHT}px`;
-updateVirtualScroller(true);
+  const label = state.groupBy.length ? 'groups' : 'records';
+  DOM.resultCount.textContent = `${new Intl.NumberFormat().format(state.displayData.length)} ${label}`;
 
-const recordLabel = state.groupBy.length ? 'groups' : 'results';
-DOM.resultCount.textContent = `Showing ${new Intl.NumberFormat().format(state.displayData.length)} ${recordLabel}`;
-
-let activeCount = 0;
-['pharmacy', 'region', 'month', 'method', 'unit'].forEach(k => {
-const isActive = state.filters[k] !== '';
-DOM[k].classList.toggle('active', isActive);
-DOM[k].parentElement.classList.toggle('has-value', isActive);
-if (isActive) activeCount++;
-});
-
-if (state.filters.search) activeCount++;
-if (state.filters.exactMatch && state.filters.search) activeCount++;
-if (state.db !== 'all') activeCount++;
-
-DOM.filtersContainer.setAttribute(
-'data-active-filters',
-activeCount ? `${activeCount} active filter${activeCount > 1 ? 's' : ''}` : ''
-);
+  const keys = ['pharmacy','region','month','method','unit'];
+  keys.forEach(k => {
+    const active = state.filters[k] !== '';
+    DOM[k].classList.toggle('active', active);
+    const wrap = document.getElementById(wrapIds[k]);
+    if (wrap) wrap.classList.toggle('has-val', active);
+  });
 }
 
-function animateValue(obj, end) {
-const start = parseInt(obj.textContent.replace(/,/g, '')) || 0;
-if (start === end) {
-obj.textContent = new Intl.NumberFormat().format(end);
-return;
-}
-
-const duration = 600;
-const startTime = performance.now();
-const fmt = new Intl.NumberFormat();
-
-function update(currentTime) {
-const elapsed = currentTime - startTime;
-const progress = Math.min(elapsed / duration, 1);
-const easeOut = 1 - Math.pow(1 - progress, 3);
-const current = Math.floor(start + (end - start) * easeOut);
-
-obj.textContent = fmt.format(current);
-if (progress < 1) requestAnimationFrame(update);
-else obj.textContent = fmt.format(end);
-}
-requestAnimationFrame(update);
+function animateNum(el, end) {
+  const start = parseInt(el.textContent.replace(/[^0-9]/g, '')) || 0;
+  if (start === end) { el.textContent = new Intl.NumberFormat().format(end); return; }
+  const dur = 500, t0 = performance.now(), fmt = new Intl.NumberFormat();
+  function tick(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt.format(Math.floor(start + (end - start) * ease));
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = fmt.format(end);
+  }
+  requestAnimationFrame(tick);
 }
 
 function downloadCSV() {
-const activeCols = getActiveColumns();
-const headers = activeCols.map(c => c.label);
-const props = activeCols.map(c => c.key);
+  const cols = getActiveCols();
+  const fText = [
+    `Source: ${state.db === 'all' ? 'All' : state.db}`,
+    state.filters.search ? `Search: "${state.filters.search}"${state.filters.exactMatch ? ' (Exact)' : ''}` : null,
+    ...['pharmacy','region','month','method','unit'].map(k => state.filters[k] ? `${k}: ${state.filters[k]}` : null),
+    state.groupBy.length ? `Grouped: ${state.groupBy.join(', ')}` : null
+  ].filter(Boolean).join(' | ');
 
-const fText = [
-`Database: ${state.db === 'all' ? 'All' : state.db}`,
-state.filters.search ? `Search: "${state.filters.search}"${state.filters.exactMatch ? ' (Exact)' : ''}` : null,
-state.filters.pharmacy ? `Pharmacy: ${state.filters.pharmacy}` : null,
-state.filters.region ? `Region: ${state.filters.region}` : null,
-state.filters.month ? `Month: ${state.filters.month}` : null,
-state.filters.method ? `Method: ${state.filters.method}` : null,
-state.filters.unit ? `Unit: ${state.filters.unit}` : null,
-state.groupBy.length ? `Grouped By: ${state.groupBy.join(', ')}` : null
-].filter(Boolean).join(' | ');
+  let csv = `"Options: ${fText || 'None'}"\n`;
+  csv += cols.map(c => `"${c.label}"`).join(',') + '\n';
+  state.displayData.forEach(row => {
+    csv += cols.map(c => `"${String(row[c.key] ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
+  });
 
-let csv = `"Applied Options: ${fText || 'None'}"\n`;
-csv += headers.map(h => `"${h}"`).join(',') + '\n';
-
-state.displayData.forEach(row => {
-csv += props.map(k => {
-let val = row[k];
-if (val === undefined) val = '';
-return `"${String(val).replace(/"/g, '""')}"`;
-}).join(',') + '\n';
-});
-
-const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `LX_Database_Export_${new Date().toISOString().slice(0,10)}.csv`;
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-URL.revokeObjectURL(url);
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })),
+    download: `LX_Export_${new Date().toISOString().slice(0,10)}.csv`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
-function debounce(func, wait) {
-let timeout;
-return function(...args) {
-clearTimeout(timeout);
-timeout = setTimeout(() => func.apply(this, args), wait);
-};
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
 function bindEvents() {
-DOM.dbSelect.addEventListener('change', (e) => {
-state.db = e.target.value;
-applyState();
-});
+  DOM.dbSelect.addEventListener('change', e => { state.db = e.target.value; applyState(); });
+  DOM.downloadBtn.addEventListener('click', downloadCSV);
 
-DOM.downloadBtn.addEventListener('click', downloadCSV);
+  DOM.search.addEventListener('input', debounce(e => {
+    state.filters.search = e.target.value;
+    applyState();
+  }, 100));
 
-const handleFilter = (key) => (e) => {
-state.filters[key] = e.target.value;
-applyState();
-};
+  DOM.exactMatchBtn.addEventListener('click', () => {
+    state.filters.exactMatch = !state.filters.exactMatch;
+    DOM.exactMatchBtn.classList.toggle('active', state.filters.exactMatch);
+    if (state.filters.search) applyState();
+  });
 
-DOM.search.addEventListener('input', debounce((e) => {
-const val = e.target.value;
-state.filters.search = val;
-DOM.searchContainer.classList.toggle('has-value', val.length > 0);
-applyState();
-}, 100));
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== DOM.search) {
+      e.preventDefault(); DOM.search.focus();
+    }
+  });
 
-DOM.exactMatchBtn.addEventListener('click', () => {
-state.filters.exactMatch = !state.filters.exactMatch;
-DOM.exactMatchBtn.classList.toggle('active', state.filters.exactMatch);
-if (state.filters.search) applyState();
-});
+  ['pharmacy','region','month','method','unit'].forEach(k => {
+    DOM[k].addEventListener('change', e => { state.filters[k] = e.target.value; applyState(); });
+  });
 
-document.addEventListener('keydown', (e) => {
-if (e.key === '/' && document.activeElement !== DOM.search) {
-e.preventDefault();
-DOM.search.focus();
-}
-});
+  document.querySelectorAll('.clr').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.target;
+      state.filters[t] = '';
+      DOM[t].value = '';
+      applyState();
+    });
+  });
 
-['pharmacy', 'region', 'month', 'method', 'unit'].forEach(key => {
-DOM[key].addEventListener('change', handleFilter(key));
-});
+  document.querySelectorAll('.group-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const k = pill.dataset.key;
+      const idx = state.groupBy.indexOf(k);
+      if (idx > -1) { state.groupBy.splice(idx, 1); pill.classList.remove('active'); }
+      else { state.groupBy.push(k); pill.classList.add('active'); }
+      applyState();
+    });
+  });
 
-DOM.clearBtns.forEach(btn => {
-btn.addEventListener('click', () => {
-const target = btn.dataset.target;
-state.filters[target] = '';
-DOM[target].value = '';
-applyState();
-});
-});
+  DOM.reset.addEventListener('click', () => {
+    state.filters = { search: '', exactMatch: false, pharmacy: '', region: '', month: '', method: '', unit: '' };
+    state.groupBy = [];
+    state.db = 'all';
+    state.sort = { key: null, dir: 1 };
+    DOM.dbSelect.value = 'all';
+    DOM.search.value = '';
+    DOM.exactMatchBtn.classList.remove('active');
+    document.querySelectorAll('.group-pill').forEach(p => p.classList.remove('active'));
+    ['pharmacy','region','month','method','unit'].forEach(k => {
+      DOM[k].value = '';
+      DOM[k].classList.remove('active');
+      const w = document.getElementById(wrapIds[k]);
+      if (w) w.classList.remove('has-val');
+    });
+    applyState();
+  });
 
-DOM.groupPills.forEach(pill => {
-pill.addEventListener('click', () => {
-const key = pill.dataset.key;
-const idx = state.groupBy.indexOf(key);
-if (idx > -1) {
-state.groupBy.splice(idx, 1);
-pill.classList.remove('active');
-} else {
-state.groupBy.push(key);
-pill.classList.add('active');
-}
-applyState();
-});
-});
+  DOM.duplicateAlert.addEventListener('click', () => {
+    if (state.currentMergedGroups.length) {
+      renderDuplicateModal();
+      DOM.duplicateModal.style.display = 'flex';
+    }
+  });
 
-DOM.reset.addEventListener('click', () => {
-state.filters = { search: '', exactMatch: false, pharmacy: '', region: '', month: '', method: '', unit: '' };
-state.groupBy = [];
-state.db = 'all';
-state.sort = { key: null, dir: 1 };
+  DOM.closeModal.addEventListener('click', () => { DOM.duplicateModal.style.display = 'none'; });
+  DOM.duplicateModal.addEventListener('click', e => { if (e.target === DOM.duplicateModal) DOM.duplicateModal.style.display = 'none'; });
 
-DOM.dbSelect.value = 'all';
-DOM.search.value = '';
-DOM.searchContainer.classList.remove('has-value');
-DOM.exactMatchBtn.classList.remove('active');
-DOM.groupPills.forEach(p => p.classList.remove('active'));
-
-['pharmacy', 'region', 'month', 'method', 'unit'].forEach(k => {
-DOM[k].value = '';
-DOM[k].classList.remove('active');
-DOM[k].parentElement.classList.remove('has-value');
-});
-
-applyState();
-});
-
-DOM.duplicateAlert.addEventListener('click', () => {
-if (state.currentMergedGroups.length > 0) {
-renderDuplicateModal();
-DOM.duplicateModal.style.display = 'flex';
-}
-});
-
-DOM.closeModal.addEventListener('click', () => {
-DOM.duplicateModal.style.display = 'none';
-});
-
-DOM.duplicateModal.addEventListener('click', (e) => {
-if (e.target === DOM.duplicateModal) {
-DOM.duplicateModal.style.display = 'none';
-}
-});
-
-window.addEventListener('resize', debounce(() => updateVirtualScroller(true), 100));
+  window.addEventListener('resize', debounce(() => renderRows(true), 100));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-initThemeSwitcher();
-bindEvents();
-loadData();
+  initTheme();
+  bindEvents();
+  loadData();
 });
 </script>
-
 </body>
 </html>
