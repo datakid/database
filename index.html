@@ -1438,6 +1438,13 @@ async function fetchData(isInitial) {
 
   try {
     const [wfRes, stRes] = await Promise.all([fetch(URLS.workforce), fetch(URLS.student)]);
+    if (!wfRes.ok || !stRes.ok) {
+      const badRes = !wfRes.ok ? wfRes : stRes;
+      const badLabel = !wfRes.ok ? 'Workforce' : 'Student';
+      let detail = '';
+      try { detail = (await badRes.json()).error || ''; } catch(e) {}
+      throw new Error(`${badLabel} feed failed (${badRes.status}${detail ? ': ' + detail : ''})`);
+    }
     const wfRaw = await wfRes.json();
     const stRaw = await stRes.json();
 
@@ -1461,7 +1468,7 @@ async function fetchData(isInitial) {
     buildBaseData();
     state.lastSynced = new Date();
   } catch(err) {
-    DOM.resultCount.textContent = 'Connection error.';
+    DOM.resultCount.textContent = err.message || 'Connection error.';
   } finally {
     state.syncing = false;
     updateSyncUI();
